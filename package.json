@@ -1,0 +1,19 @@
+{
+  "name": "gps",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ilkka183/CRC16.git"
+  },
+  "author": "Ilkka Salmenius",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ilkka183/CRC16/issues"
+  },
+  "homepage": "https://github.com/ilkka183/CRC16#readme"
+}
