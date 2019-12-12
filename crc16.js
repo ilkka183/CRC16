@@ -61,51 +61,76 @@ class Crc16 {
 
 class Concox {
   static timeZoneLanguage(utc) {
-    const orientation = (utc >= 0) ? 0 : 1;
+    const gmt = (utc >= 0) ? 0 : 1;
+    const language = 0b0010;
 
-    return utc*100 << 4 | 0b0010;
+    return utc*100 << 4 | gmt << 3 | language;
   }
 
-  static composeLoginRequest(imei, utc, number) {
-    let data = [];
+  static crc(data, jar = false) {
+    let crc;
 
-    const timeZone = Concox.timeZoneLanguage(utc);
+    if (jar)
+      crc = new Crc16(0xA097, false, 0x0000, 0x0000);
+    else
+      crc = new Crc16(0x8408, true, 0xFFFF, 0xFFFF);
 
-    data.push(0x00);
-    data.push(0x01);
+    crc.createTable();
+    return crc.calculate(data);
+  }
+
+  static check(data, jar = false) {
+    const crc = Concox.crc(data, jar);
+    console.log(crc.toString(16).toUpperCase());
+  }
+}
+
+
+class ConcoxPacket {
+  constructor() {
+    this.data = [];
+  }
+ 
+  addByte(value) {
+    this.data.push(value);
+  }
+
+  addWord(value) {
+    this.addByte(value >> 8);
+    this.addByte(value & 0xFFFF);
+  }
+
+  encapsulate() {
+    this.data.unshift(0x78); // start bytes
+    this.data.unshift(0x78);
+
+    this.data.push(0x0D); // stop bytes
+    this.data.push(0x0A);
+  }
+
+  composeLoginRequest(imei, utc, number) {
+    this.addByte(0x00); // length
+    this.addByte(0x01); // protocol
 
     for (let b of imei)
-      data.push(b);
+      this.addByte(b);
 
-    data.push(0x36);
-    data.push(0x05);
+    this.addByte(0x36);
+    this.addByte(0x05);
+    this.addWord(Concox.timeZoneLanguage(utc));
+    this.addWord(number);
 
-    data.push(timeZone >> 8);
-    data.push(timeZone & 0xFFFF);
+    this.data[0] = this.data.length + 1;
 
-    data.push(number >> 8);
-    data.push(number & 0xFFFF);
-
-    data[0] = data.length + 1;
-
-    const crc = Concox.loginCrc(data);
-
-    data.push(crc >> 8);
-    data.push(crc & 0xFFFF);
-
-    data.unshift(0x78);
-    data.unshift(0x78);
-
-    data.push(0x0D);
-    data.push(0x0A);
-
-    return data;
+    this.addWord(Concox.crc(this.data, true));
+    
+    this.encapsulate();
   }
 
-  static logData(data) {
+  log() {
     let str = '';
 
-    for (const b of data) {
+    for (const b of this.data) {
       if (str != '')
         str += ' ';
 
@@ -114,37 +139,14 @@ class Concox {
 
     console.log(str);
   }
-
-  static crc(data, poly, reflected, init, final) {
-    let crc = new Crc16(poly, reflected, init, final);
-    crc.createTable();
-    return crc.calculate(data);
-  }
-
-  static loginCrc(data) {
-    return Concox.crc(data, 0xA097, false, 0x0000, 0x0000);
-  }
-
-  static otherCrc(data) {
-    return Concox.crc(data, 0x8408);
-  }
-
-  static check(crc) {
-    console.log(crc.toString(16).toUpperCase());
-  }
-
-  static checkLogin(data) {
-    Concox.check(Concox.loginCrc(data));
-  }
-
-  static checkOther(data) {
-    Concox.check(Concox.otherCrc(data));
-  }
 }
 
 
-const IMEI = [
-//  0x03, 0x55, 0x95, 0x10, 0x92, 0x91, 0x88, 0x58
+const imei1 = [
+  0x03, 0x55, 0x95, 0x10, 0x92, 0x91, 0x88, 0x58
+];
+
+const imei2 = [
   0x08, 0x68, 0x12, 0x01, 0x48, 0x37, 0x35, 0x71
 ];
 
@@ -237,25 +239,23 @@ const packet6b = [
   0x00, 0x06, 0x98, 0x00, 0x00, 0x00
 ];
 
-/*
 // Different CRC parameters are used in the login request !!!
-Concox.checkLogin(packet1a);
-Concox.checkLogin(packet1a1);
-Concox.checkLogin(packet1a2);
+Concox.check(packet1a, true);
+Concox.check(packet1a1, true);
+Concox.check(packet1a2, true);
 
 // The rest are using the same parameters
-Concox.checkOther(packet1b);
-Concox.checkOther(packet1b1);
-Concox.checkOther(packet2a);
-Concox.checkOther(packet2b);
-Concox.checkOther(packet3a);
-Concox.checkOther(packet4a);
-Concox.checkOther(packet5a);
-Concox.checkOther(packet5b);
-Concox.checkOther(packet6a);
-Concox.checkOther(packet6b);
+Concox.check(packet1b);
+Concox.check(packet1b1);
+Concox.check(packet2a);
+Concox.check(packet2b);
+Concox.check(packet3a);
+Concox.check(packet4a);
+Concox.check(packet5a);
+Concox.check(packet5b);
+Concox.check(packet6a);
+Concox.check(packet6b);
 
-console.log(Concox.timeZoneLanguage(8).toString(16));
-*/
-
-Concox.logData(Concox.composeLoginRequest(IMEI, 8, 57));
+let packet = new ConcoxPacket();
+packet.composeLoginRequest(imei2, 8, 57)
+packet.log();
