@@ -60,6 +60,8 @@ class Crc16 {
 
 
 class Concox {
+  static encryptKey = [0x78, 0x69, 0x6e, 0x73, 0x69, 0x77, 0x65, 0x69, 0x26, 0x63, 0x6f, 0x6e, 0x63, 0x6f, 0x78];
+
   static timeZoneLanguage(utc) {
     const gmt = (utc >= 0) ? 0 : 1;
     const language = 0b0010;
@@ -67,15 +69,13 @@ class Concox {
     return utc*100 << 4 | gmt << 3 | language;
   }
 
-  static crc(data, jar = false) {
-    let crc;
-
-    if (jar)
-      crc = new Crc16(0xA097, false, 0x0000, 0x0000);
-    else
-      crc = new Crc16(0x8408, true, 0xFFFF, 0xFFFF);
-
+  static crc(data, encrypt = false) {
+    let crc = new Crc16(0x8408);
     crc.createTable();
+
+    if (encrypt)
+      data = [...data, ...Concox.encryptKey];
+
     return crc.calculate(data);
   }
 
@@ -83,21 +83,43 @@ class Concox {
     const crc = Concox.crc(data, jar);
     console.log(crc.toString(16).toUpperCase());
   }
+
+  static log(data) {
+    let str = '';
+
+    for (const b of data) {
+      if (str != '')
+        str += ' ';
+
+      str += ('0' + b.toString(16)).slice(-2).toUpperCase();
+    }
+
+    console.log(str);
+  }
 }
 
 
-class ConcoxPacket {
+class ConcoxWriter {
   constructor() {
     this.data = [];
   }
  
-  addByte(value) {
+  writeByte(value) {
     this.data.push(value);
   }
 
-  addWord(value) {
-    this.addByte(value >> 8);
-    this.addByte(value & 0xFFFF);
+  writeWord(value) {
+    this.writeByte(value >> 8);
+    this.writeByte(value & 0xFFFF);
+  }
+
+  writeBytes(value) {
+    for (let b of value)
+      this.writeByte(b);
+  }
+
+  updateLength() {
+    this.data[0] = this.data.length + 1;
   }
 
   encapsulate() {
@@ -107,37 +129,123 @@ class ConcoxPacket {
     this.data.push(0x0D); // stop bytes
     this.data.push(0x0A);
   }
+}
 
-  composeLoginRequest(imei, utc, number) {
-    this.addByte(0x00); // length
-    this.addByte(0x01); // protocol
 
-    for (let b of imei)
-      this.addByte(b);
-
-    this.addByte(0x36);
-    this.addByte(0x05);
-    this.addWord(Concox.timeZoneLanguage(utc));
-    this.addWord(number);
-
-    this.data[0] = this.data.length + 1;
-
-    this.addWord(Concox.crc(this.data, true));
-    
-    this.encapsulate();
+class ConcoxReader {
+  constructor(data) {
+    this.data = data;
+    this.index = 0;
   }
 
-  log() {
-    let str = '';
+  peekByte() {
+    return this.data[this.index];
+  }
 
-    for (const b of this.data) {
-      if (str != '')
-        str += ' ';
+  peekWord() {
+    const upper = this.data[this.index];
+    const lower = this.data[this.index + 1];
 
-      str += ('0' + b.toString(16)).slice(-2).toUpperCase();
+    return (upper << 8) | lower;
+  }
+
+  peekBytes(offset, count) {
+    const result = [];
+
+    for (let i = 0; i < count; i++ )
+      result.push(this.data[this.index + offset + i]);
+
+    return result;
+  }
+
+  readByte() {
+    return this.data[this.index++];
+  }
+
+  readWord() {
+    const upper = this.readByte();
+    const lower = this.readByte();
+
+    return (upper << 8) | lower;
+  }
+
+  readBytes(count) {
+    const result = [];
+
+    for (let i = 0; i < count; i++ )
+      result.push(this.readByte());
+
+    return result;
+  }
+}
+
+
+class ConcoxPacket {
+}
+
+
+class LoginPacket extends ConcoxPacket {
+  request(imei, utc, number) {
+    const writer = new ConcoxWriter();
+
+    writer.writeByte(0x00); // length
+    writer.writeByte(0x01); // protocol
+    writer.writeBytes(imei);
+    writer.writeByte(0x36);
+    writer.writeByte(0x05);
+    writer.writeWord(Concox.timeZoneLanguage(utc));
+    writer.writeWord(number);
+    writer.updateLength();
+    writer.writeWord(Concox.crc(writer.data, true));
+    writer.encapsulate();
+
+    return writer.data;
+  }
+
+  response(data) {
+    const reader = new ConcoxReader(data);
+
+    const stopBit = reader.peekBytes(data.length - 2, 2);
+
+    if ((stopBit[0] != 0x0D) || (stopBit[1] != 0x0A))
+      throw 'Invalid stop bit';
+
+    const startBit = reader.readBytes(2);
+
+    if ((startBit[0] != 0x78) || (startBit[1] != 0x78))
+      throw 'Invalid start bit';
+
+    const packetLength = reader.readByte();
+
+    if (packetLength !== data.length - 5)
+      throw 'Invalid packet length';
+
+    const protocolNumber = reader.readByte();
+
+    if (protocolNumber !== 0x01)
+      throw 'Invalid protocol number';
+
+    const dateTime = {
+      year: reader.readByte(),
+      month: reader.readByte(),
+      day: reader.readByte(),
+      hour: reader.readByte(),
+      min: reader.readByte(),
+      second: reader.readByte(),
     }
 
-    console.log(str);
+    const reservedExtensionBitLength = reader.readByte();
+    const informationSerialNumber = reader.readWord();
+    const reservedExtensionBit = (reservedExtensionBitLength > 0) ? reader.readBytes(reservedExtensionBitLength) : [];
+
+    return {
+      packetLength,
+      protocolNumber,
+      dateTime,
+      reservedExtensionBitLength,
+      reservedExtensionBit,
+      informationSerialNumber
+    };
   }
 }
 
@@ -151,18 +259,42 @@ const imei2 = [
 ];
 
 
+/*
+
+Sample login packet：78 78 11 01 08 68 12 01 48 37 35 71 36 05 32 02 00 39 DE F7 0D 0A
+String for CRC calculation：crc_str =11 01 08 68 12 01 48 37 35 71 36 05 32 02 00 39
+Encryption Key：key = xinsiwei&concox (ASCII) à key = 78 69 6e 73 69 77 65 69 26 63 6f 6e 63 6f 78(Hex)
+So, new string new_str = 11 01 08 68 12 01 48 37 35 71 36 05 32 02 00 39 78 69 6e 73 69 77 65 69 26 63 6f 6e 63 6f 78
+Using CRC-16/X25 algorithm, you got CRC_value = 0xdef7 for new_str.
+
+*/
+
 // 1) Different CRC parameters are used in the login request !!!
 // - polynomial 0xA097
 // - no reflection
 // - initial value 0x0000
 // - final value 0x0000
+
 const packet1a = [
+  0x11, 0x01, 0x08, 0x68, 0x12, 0x01, 0x48, 0x37, 0x35, 0x71, 0x36, 0x05, 0x32, 0x02, 0x00, 0x39
+];
+
+const login0 = [
+  0x11, 0x01, 0x08, 0x68, 0x12, 0x01, 0x48, 0x37, 0x35, 0x71, 0x36, 0x05, 0x32, 0x02, 0x00, 0x39
+];
+
+const login1 = [
+  0x11, 0x01, 0x03, 0x55, 0x95, 0x10, 0x91, 0x34, 0x74, 0x89, 0x36, 0x08, 0x06, 0x42, 0x00, 0x01
+];
+
+const login2 = [
   0x11, 0x01, 0x08, 0x68, 0x12, 0x01, 0x48, 0x37, 0x35, 0x71, 0x36, 0x05, 0x32, 0x02, 0x00, 0x39
 ];
 
 const packet1a1 = [
   0x11, 0x01, 0x08, 0x68, 0x12, 0x01, 0x48, 0x37, 0x35, 0x71, 0x36, 0x05, 0x32, 0x02, 0x00, 0x3A
 ];
+
 
 const packet1a2 = [
   0x11, 0x01, 0x03, 0x55, 0x95, 0x10, 0x92, 0x91, 0x88, 0x58, 0x36, 0x05, 0x32, 0x02, 0x00, 0x39
@@ -172,6 +304,8 @@ const packet1a2 = [
 echo -n '787811010868120148373571360532020039DEF70D0A' | xxd -r -ps | nc 40.115.232.141 21105 | hexdump -C
 echo -n '78781101086812014837357136053202003A9F050D0A' | xxd -r -ps | nc 40.115.232.141 21105 | hexdump -C
 echo -n '78781101035595109291885836053202003906890D0A' | xxd -r -ps | nc 40.115.232.141 21105 | hexdump -C
+echo -n '78781101035595109134748936080642000115FC0D0A' | xxd -r -ps | nc 40.115.232.141 21105 | hexdump -C
+echo -n '78781101035595109134748936080642000115FC0D0A' | xxd -r -ps | nc 40.115.232.141 21105 | hexdump -C
 7878
 11
 01
@@ -191,6 +325,10 @@ DEF7
 // - final value 0xFFFF
 const packet1b = [
   0x0C, 0x01, 0x11, 0x03, 0x14, 0x08, 0x38, 0x39, 0x00, 0x00, 0x39
+];
+
+const data1b = [
+  0x78, 0x78, ...packet1b, 0x95, 0x70, 0x0D, 0x0A
 ];
 
 const packet1b1 = [
@@ -239,6 +377,7 @@ const packet6b = [
   0x00, 0x06, 0x98, 0x00, 0x00, 0x00
 ];
 
+/*
 // Different CRC parameters are used in the login request !!!
 Concox.check(packet1a, true);
 Concox.check(packet1a1, true);
@@ -255,7 +394,19 @@ Concox.check(packet5a);
 Concox.check(packet5b);
 Concox.check(packet6a);
 Concox.check(packet6b);
+*/
 
-let packet = new ConcoxPacket();
-packet.composeLoginRequest(imei2, 8, 57)
-packet.log();
+Concox.check(packet1a, true);
+Concox.check(login0, true);
+Concox.check(login1, true);
+Concox.check(login2, true);
+
+const login = new LoginPacket();
+Concox.log(login.request(imei2, 8, 0x39));
+
+try {
+  console.log(login.response(data1b));
+}
+catch (error) {
+  console.log(error);
+}
