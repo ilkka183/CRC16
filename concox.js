@@ -1,6 +1,10 @@
 const Crc16 = require('./crc16');
 
 
+const crc16x25 = new Crc16(0x8408);
+crc16x25.createTable();
+
+
 class Concox {
   static encryptKey = [0x78, 0x69, 0x6e, 0x73, 0x69, 0x77, 0x65, 0x69, 0x26, 0x63, 0x6f, 0x6e, 0x63, 0x6f, 0x78];
 
@@ -12,18 +16,15 @@ class Concox {
   }
 
   static crc(data, encrypted = false) {
-    let crc = new Crc16(0x8408);
-    crc.createTable();
-
     if (encrypted)
       data = [...data, ...Concox.encryptKey];
 
-    return crc.calculate(data);
+    return crc16x25.calculate(data);
   }
 
   static check(data, encrypted = false) {
-    const crc = Concox.crc(data, encrypted);
-    console.log(crc.toString(16).toUpperCase());
+    const code = Concox.crc(data, encrypted);
+    console.log(code.toString(16).toUpperCase());
   }
 
   static equals(bytes1, bytes2) {
@@ -37,7 +38,7 @@ class Concox {
     return true;
   }
 
-  static log(data) {
+  static toString(data) {
     let str = '';
 
     for (const b of data) {
@@ -47,7 +48,28 @@ class Concox {
       str += ('0' + b.toString(16)).slice(-2).toUpperCase();
     }
 
-    console.log(str);
+    return str;
+  }
+
+  static toBinary(str) {
+    let values = [];
+
+    if (str.indexOf(' ') != -1) {
+      // 01 23 45 67 89 0A BC DE
+      values = str.split(' ');
+    }
+    else {
+      // 01234567890ABCDE
+      for (let i = 0; i < str.length; i += 2)
+        values.push(str.substr(i, 2));
+    }
+ 
+    const data = [];
+  
+    for (const value of values)
+      data.push(parseInt(value, 16));
+
+    return data;
   }
 }
 
@@ -134,46 +156,48 @@ class ConcoxReader {
 
 
 class ConcoxPacket {
-}
+  getStartBit() {
+    return [0x78, 0x78];
+  }
 
+  getTopBit() {
+    return [0x0D, 0x0A];
+  }
 
-class LoginPacket extends ConcoxPacket {
-  constructor(imei, model, utc, number) {
-    super();
-    this.imei = imei;
-    this.model = model;
-    this.utc = utc;
-    this.number = number;
+  get protocolNumber() {
+    return undefined;
+  }
+
+  write() {
   }
 
   build() {
     const writer = new ConcoxWriter();
-
     writer.writeByte(0x00); // length
-    writer.writeByte(0x01); // protocol
-    writer.writeBytes(this.imei);
-    writer.writeBytes(this.model);
-    writer.writeWord(Concox.timeZoneLanguage(this.utc));
-    writer.writeWord(this.number);
-    writer.updateLength();
-    writer.writeWord(Concox.crc(writer.data, true));
+    writer.writeByte(this.protocolNumber);
+
+    this.write(writer);
 
     writer.encapsulate();
 
     return writer.data;
   }
 
-  parse(data) {
-  }
-}
+  compare(expected) {
+    const data = this.build();
+    const str = Concox.toString(data);
 
+    if (str != expected) {
+      console.log('<<< ERROR >>>');
+      console.log(str + ' (builded)');
+      console.log(expected + ' (expected)');
+      console.log('<<< ERROR >>>');
+    }
+    else
+      console.log(str);
+    }
 
-class LoginResponsePacket extends ConcoxPacket {
-  constructor() {
-    super();
-  }
-
-  build() {
+  read(reader) {
   }
 
   parse(data) {
@@ -198,10 +222,72 @@ class LoginResponsePacket extends ConcoxPacket {
 
     const protocolNumber = reader.readByte();
 
-    if (protocolNumber !== 0x01)
+    if (protocolNumber !== this.protocolNumber)
       throw 'Invalid protocol number';
 
-    const dateTime = {
+    this.read(reader);
+  }
+
+  parseString(str) {
+    console.log(str);
+    const data = Concox.toBinary(str);
+    this.parse(data);
+  }
+}
+
+
+class LoginRequest extends ConcoxPacket {
+  constructor(imei, model, utc, serialNumber) {
+    super();
+
+    this.imei = imei;
+    this.model = model;
+    this.utc = utc;
+    this.serialNumber = serialNumber;
+  }
+
+  get protocolNumber() {
+    return 0x01;
+  }
+
+  write(writer) {
+    writer.writeBytes(this.imei);
+    writer.writeBytes(this.model);
+    writer.writeWord(Concox.timeZoneLanguage(this.utc));
+    writer.writeWord(this.serialNumber);
+    writer.updateLength();
+    writer.writeWord(Concox.crc(writer.data, true));
+  }
+
+  read(reader) {
+    this.imei = reader.readBytes(8);
+    this.model = reader.readBytes(2);
+    this.utc = reader.readWord();
+    this.serialNumber = reader.readWord();
+  }
+}
+
+
+class LoginResponse extends ConcoxPacket {
+  constructor() {
+    super();
+  }
+
+  get protocolNumber() {
+    return 0x01;
+  }
+
+  write(writer) {
+    writer.writeBytes(this.imei);
+    writer.writeBytes(this.model);
+    writer.writeWord(Concox.timeZoneLanguage(this.utc));
+    writer.writeWord(this.serialNumber);
+    writer.updateLength();
+    writer.writeWord(Concox.crc(writer.data, true));
+  }
+
+  read(reader) {
+    this.dateTime = {
       year: reader.readByte(),
       month: reader.readByte(),
       day: reader.readByte(),
@@ -210,101 +296,11 @@ class LoginResponsePacket extends ConcoxPacket {
       second: reader.readByte(),
     }
 
-    const reservedExtensionBitLength = reader.readByte();
-    const informationSerialNumber = reader.readWord();
-    const reservedExtensionBit = (reservedExtensionBitLength > 0) ? reader.readBytes(reservedExtensionBitLength) : [];
-
-    return {
-      packetLength,
-      protocolNumber,
-      dateTime,
-      reservedExtensionBitLength,
-      reservedExtensionBit,
-      informationSerialNumber
-    };
+    this.reservedExtensionBitLength = reader.readByte();
+    this.reservedExtensionBit = (this.reservedExtensionBitLength > 0) ? reader.readBytes(this.reservedExtensionBitLength) : [];
+    this.informationSerialNumber = reader.readWord();
   }
 }
-
-
-const imei1 = [
-  0x03, 0x55, 0x95, 0x10, 0x92, 0x91, 0x88, 0x58
-];
-
-
-const data1a = [
-  0x11, 0x01, 0x08, 0x68, 0x12, 0x01, 0x48, 0x37, 0x35, 0x71, 0x36, 0x05, 0x32, 0x02, 0x00, 0x39
-];
-
-const login0 = [
-  0x11, 0x01, 0x08, 0x68, 0x12, 0x01, 0x48, 0x37, 0x35, 0x71, 0x36, 0x05, 0x32, 0x02, 0x00, 0x39
-];
-
-const login2 = [
-  0x11, 0x01, 0x08, 0x68, 0x12, 0x01, 0x48, 0x37, 0x35, 0x71, 0x36, 0x05, 0x32, 0x02, 0x00, 0x39
-];
-
-const data1a1 = [
-  0x11, 0x01, 0x08, 0x68, 0x12, 0x01, 0x48, 0x37, 0x35, 0x71, 0x36, 0x05, 0x32, 0x02, 0x00, 0x3A
-];
-
-
-const data1a2 = [
-  0x11, 0x01, 0x03, 0x55, 0x95, 0x10, 0x92, 0x91, 0x88, 0x58, 0x36, 0x05, 0x32, 0x02, 0x00, 0x39
-];
-
-const data1b = [
-  0x0C, 0x01, 0x11, 0x03, 0x14, 0x08, 0x38, 0x39, 0x00, 0x00, 0x39
-];
-
-const packet1b = [
-  0x78, 0x78, ...data1b, 0x95, 0x70, 0x0D, 0x0A
-];
-
-const data1b1 = [
-  0x0c, 0x01, 0x13, 0x0c, 0x0c, 0x09, 0x3a, 0x29, 0x00, 0x00, 0x39
-];
-
-
-const data2a = [
-  0x0B, 0x23, 0xC0, 0x01, 0x22, 0x04, 0x00, 0x01, 0x00, 0x08
-];
-
-const data2b = [
-  0x05, 0x23, 0x01, 0x00
-];
-
-const data3a = [
-  0x00, 0x6F, 0x33, 0x11, 0x03, 0x14, 0x09, 0x06, 0x08, 0x00, 0x09, 0x01, 0xCC, 0x00, 0x28, 0x7D, 0x00, 0x1F, 0x40, 0x0E,
-  0x24, 0x28, 0x7D, 0x00, 0x1F, 0x71, 0x07, 0x28, 0x7D, 0x00, 0x1E, 0x3F, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x31, 0x00, 0x36,
-  0x76, 0x05, 0xBB, 0x5D, 0x46, 0x00, 0x87, 0x36, 0x31, 0x87, 0x5B, 0x48, 0xCC, 0x7B, 0x35, 0x36, 0x61, 0xA6, 0x4C, 0x00,
-  0xE0, 0x4B, 0x8C, 0xBF, 0x58, 0x4F, 0x78, 0xA1, 0x06, 0x54, 0x15, 0xDE, 0x4F, 0x00, 0x87, 0x46, 0x1B, 0x9D, 0x84, 0x51,
-  0x26, 0x52, 0xF3, 0xAD, 0xB1, 0x94, 0x55, 0xA1, 0x00, 0x00, 0x08
-];
-
-const data4a = [
-  0x48, 0x2C, 0x10, 0x06, 0x0E, 0x02, 0x2D, 0x35, 0x01, 0xCC, 0x00, 0x28, 0x7D, 0x00, 0x1F, 0x71, 0x2D, 0x28, 0x7D, 0x00,
-  0x1E, 0x17, 0x25, 0x28, 0x7D, 0x00, 0x1E, 0x23, 0x1E, 0x28, 0x7D, 0x00, 0x1F, 0x72, 0x1C, 0x28, 0x7D, 0x00, 0x1F, 0x40,
-  0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x02, 0x80, 0x89, 0x17, 0x44, 0x98,
-  0xB4, 0x5C, 0xCC, 0x7B, 0x35, 0x36, 0x61, 0xA6, 0x5B, 0x00, 0x1F  
-];
-
-const data5a = [
-  0x11, 0x80, 0x0B, 0x00, 0x00, 0x00, 0x00, 0x55, 0x4E, 0x4C, 0x4F, 0x43, 0x4B, 0x23, 0x00, 0x01
-];
-
-const data5b = [
-  0x00, 0x0D, 0x21, 0x00, 0x00, 0x00, 0x00, 0x01, 0x4F, 0x4B, 0x21, 0x00, 0x07
-];
-
-const data6a = [
-  0x00, 0x28, 0x98, 0x00, 0x00, 0x08, 0x08, 0x68, 0x12, 0x01, 0x48, 0x37, 0x35, 0x71, 0x01, 0x00, 0x08, 0x04, 0x60, 0x04,
-  0x03, 0x40, 0x00, 0x99, 0x32, 0x02, 0x00, 0x0A, 0x89, 0x86, 0x02, 0xB3, 0x13, 0x15, 0x90, 0x10, 0x99, 0x32, 0x00, 0x04
-];
-
-const data6b = [
-  0x00, 0x06, 0x98, 0x00, 0x00, 0x00
-];
 
 /*
 echo -n '787811010868120148373571360532020039DEF70D0A' | xxd -r -ps | nc 40.115.232.141 21105 | hexdump -C
@@ -325,22 +321,31 @@ Concox.check(data5a);
 Concox.check(data5b);
 Concox.check(data6a);
 Concox.check(data6b);
+
+78 78 11 01 03 55 95 10 91 34 74 89 36 08 06 42 00 01 15 FC 0D 0A
+78 78 0C 01 13 0C 0D 02 39 0C 00 00 01 F6 EC 0D 0A
+79 79 00 06 98 00 00 00 C7 00 0D 0A
+78 78 0B 23 01 01 92 04 00 01 00 03 4B 7F 0D 0A
+78 78 05 23 00 03 4C 4D 0D 0A
+78 78 0B 23 01 01 92 04 00 01 00 04 3F C0 0D 0A
+78 78 05 23 00 04 38 F2 0D 0A
+78 78 0B 23 01 01 93 04 00 01 00 05 2A 62 0D 0A
+78 78 05 23 00 05 29 7B 0D 0A
+78 78 0B 23 01 01 93 04 00 01 00 06 18 F9 0D 0A
+78 78 05 23 00 06 1B E0 0D 0A
+78 78 0B 23 01 01 93 04 00 01 00 07 09 70 0D 0A
+78 78 05 23 00 07 0A 69 0D 0A
+78 78 0B 23 01 01 93 04 00 01 00 08 F1 87 0D 0A
+78 78 05 23 00 08 F2 9E 0D 0A
+78 78 0B 23 01 01 91 04 00 01 00 09 E8 58 0D 0A
+78 78 05 23 00 09 E3 17 0D 0A
 */
 
 // Login
-const imei = [
-  0x03, 0x55, 0x95, 0x10, 0x91, 0x34, 0x74, 0x89
-];
+let packet = new LoginRequest([0x03, 0x55, 0x95, 0x10, 0x91, 0x34, 0x74, 0x89], [0x36, 0x08], 1, 1);
+packet.compare('78 78 11 01 03 55 95 10 91 34 74 89 36 08 06 42 00 01 15 FC 0D 0A');
+console.log(packet);
 
-const loginData = [0x11, 0x01, 0x03, 0x55, 0x95, 0x10, 0x91, 0x34, 0x74, 0x89, 0x36, 0x08, 0x06, 0x42, 0x00, 0x01];
-const loginDataR = [0x0C, 0x01, 0x13, 0x0C, 0x0D, 0x02, 0x39, 0x0C, 0x00, 0x00, 0x01];
-const loginPacketR = [0x78, 0x78, ...loginDataR, 0xF6, 0xEC, 0x0D, 0x0A];
-
-console.log('Login');
-
-const login = new LoginPacket(imei, [0x36, 0x08], 1, 0x01);
-Concox.log(login.build());
-
-const loginReply = new LoginResponsePacket();
-Concox.log(loginPacketR);
-console.log(loginReply.parse(loginPacketR));
+packet = new LoginResponse();
+packet.parseString('78780C01130C0D02390C000001F6EC0D0A');
+console.log(packet);
