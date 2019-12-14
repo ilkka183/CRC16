@@ -1,8 +1,8 @@
 const Crc16 = require('./crc16');
 
 
-const crc16x25 = new Crc16(0x8408);
-crc16x25.createTable();
+const crc16_x25 = new Crc16(0x8408);
+crc16_x25.createTable();
 
 
 class Concox {
@@ -19,7 +19,7 @@ class Concox {
     if (encrypted)
       data = [...data, ...Concox.encryptKey];
 
-    return crc16x25.calculate(data);
+    return crc16_x25.calculate(data);
   }
 
   static crcRange(data, index, count, encrypted = false) {
@@ -48,7 +48,7 @@ class Concox {
       console.log('<<< ERROR >>>');
       console.log(Concox.toHex(data1));
       console.log(Concox.toHex(data2));
-      console.log('===');
+      console.log('=== ERROR ===');
       console.log(data1);
       console.log(data2);
       console.log('<<< ERROR >>>');
@@ -62,7 +62,7 @@ class Concox {
 
     for (const b of data) {
       if (hex != '')
-      hex += ' ';
+        hex += ' ';
 
       hex += ('0' + b.toString(16)).slice(-2).toUpperCase();
     }
@@ -96,6 +96,7 @@ class Concox {
 class ConcoxWriter {
   constructor(protocolNumber) {
     this.data = [];
+    this.protocolNumber = protocolNumber;
 
     if (protocolNumber === 0x98)
       this.writeWord(0x0000); // two byte length
@@ -119,17 +120,20 @@ class ConcoxWriter {
       this.writeByte(b);
   }
 
-  encapsulate(startBit = 0x78, encryptedCrc = false) {
-    const length = this.data.length + 1;
+  encapsulate(encryptedCrc = false) {
+    if (this.protocolNumber === 0x98) {
+      const length = this.data.length;
 
-    if (startBit === 0x78)
-      this.data[0] = length;
-    else {
       this.data[0] = (length >> 8) & 0xFF;
       this.data[1] = length & 0xFF;
     }
+    else {
+      this.data[0] = this.data.length + 1;
+    }
       
     this.writeWord(Concox.crc(this.data, encryptedCrc));
+
+    const startBit = (this.protocolNumber === 0x98) ? 0x79 : 0x78;
 
     this.data.unshift(startBit); // start bytes
     this.data.unshift(startBit);
@@ -232,12 +236,8 @@ class ConcoxReader {
 }
 
 
-class ConcoxPacket {
-}
-
-
-class ConcoxLogin extends ConcoxPacket {
-  static buildTerminal(imei, model, utc, informationSerialNumber) {
+class TerminalLogin {
+  static build(imei, model, utc, informationSerialNumber) {
     const writer = new ConcoxWriter(0x01);
 
     writer.writeBytes(imei);
@@ -245,10 +245,10 @@ class ConcoxLogin extends ConcoxPacket {
     writer.writeWord(Concox.timeZoneLanguage(utc));
     writer.writeWord(informationSerialNumber);
 
-    return writer.encapsulate(0x78, true);
+    return writer.encapsulate(true);
   }
 
-  static parseTerminal(data) {
+  static parse(data) {
     const reader = new ConcoxReader(data, 0x01, true);
 
     const infoContent = {
@@ -265,8 +265,11 @@ class ConcoxLogin extends ConcoxPacket {
       informationSerialNumber
     }
   }
-  
-  static buildServer(year, month, day, hour, min, second, reservedExtensionBit, informationSerialNumber) {
+}
+
+
+class ServerLogin {
+  static build(year, month, day, hour, min, second, reservedExtensionBit, informationSerialNumber) {
     const writer = new ConcoxWriter(0x01);
 
     writer.writeByte(year);
@@ -286,7 +289,7 @@ class ConcoxLogin extends ConcoxPacket {
     return writer.encapsulate();
   }
 
-  static parseServer(data) {
+  static parse(data) {
     const reader = new ConcoxReader(data, 0x01);
 
     const dateTime = {
@@ -313,28 +316,21 @@ class ConcoxLogin extends ConcoxPacket {
 }
 
 
-class ConcoxHeartbeat extends ConcoxPacket {
-  static buildTerminal(year, month, day, hour, min, second, reservedExtensionBit, informationSerialNumber) {
+class TerminalHeartbeat {
+  static build(terminalInformationContent, voltageLevel, gsmSignalLength, languageExtend, informationSerialNumber) {
     const writer = new ConcoxWriter(0x23);
 
-    writer.writeByte(year);
-    writer.writeByte(month);
-    writer.writeByte(day);
-    writer.writeByte(hour);
-    writer.writeByte(min);
-    writer.writeByte(second);
-
-    writer.writeByte(reservedExtensionBit.length);
-
-    if (reservedExtensionBit.length > 0)
-      writer.writeByte(reservedExtensionBit);
+    writer.writeByte(terminalInformationContent);
+    writer.writeWord(voltageLevel);
+    writer.writeByte(gsmSignalLength);
+    writer.writeWord(languageExtend);
 
     writer.writeWord(informationSerialNumber);
 
     return writer.encapsulate();
   }
 
-  static parseTerminal(data) {
+  static parse(data) {
     const reader = new ConcoxReader(data, 0x23);
 
     const infoContent = {
@@ -352,19 +348,33 @@ class ConcoxHeartbeat extends ConcoxPacket {
       informationSerialNumber
     }
   }
+}
 
-  static parseServer(data) {
+
+class ServerHeartbeat {
+  static build(informationSerialNumber) {
+    const writer = new ConcoxWriter(0x23);
+
+    writer.writeWord(informationSerialNumber);
+
+    return writer.encapsulate();
+  }
+
+  static parse(data) {
     const reader = new ConcoxReader(data, 0x23);
 
     const informationSerialNumber = reader.readWord();
 
-    return { protocolNumber: reader.protocolNumber, informationSerialNumber }
+    return {
+      protocolNumber: reader.protocolNumber,
+      informationSerialNumber
+    }
   }
 }
 
 
-class ConcoxInformationTransmission extends ConcoxPacket {
-  static buildTerminal(terminalInformationContent, voltageLevel, gsmSignalLength, languageExtend, informationSerialNumber) {
+class TerminalInformationTransmission {
+  static build(terminalInformationContent, voltageLevel, gsmSignalLength, languageExtend, informationSerialNumber) {
     const writer = new ConcoxWriter(0x98);
 
     writer.writeByte(terminalInformationContent);
@@ -376,7 +386,7 @@ class ConcoxInformationTransmission extends ConcoxPacket {
     return writer.encapsulate();
   }
 
-  static parseTerminal(data) {
+  static parse(data) {
     const reader = new ConcoxReader(data, 0x98);
 
     const infoContent = {
@@ -394,8 +404,11 @@ class ConcoxInformationTransmission extends ConcoxPacket {
       informationSerialNumber
     }
   }
+}
 
-  static buildServer(reservedExtensionBit, informationSerialNumber) {
+
+class ServerInformationTransmission {
+  static build(reservedExtensionBit, informationSerialNumber) {
     const writer = new ConcoxWriter(0x98);
 
     writer.writeByte(reservedExtensionBit.length);
@@ -408,7 +421,7 @@ class ConcoxInformationTransmission extends ConcoxPacket {
     return writer.encapsulate();
   }
 
-  static parseServer(data) {
+  static parse(data) {
     const reader = new ConcoxReader(data, 0x98);
 
     const reservedExtensionBitLength = reader.readByte();
@@ -425,48 +438,12 @@ class ConcoxInformationTransmission extends ConcoxPacket {
 }
 
 
-/*
-echo -n '787811010868120148373571360532020039DEF70D0A' | xxd -r -ps | nc 40.115.232.141 21105 | hexdump -C
-echo -n '78781101086812014837357136053202003A9F050D0A' | xxd -r -ps | nc 40.115.232.141 21105 | hexdump -C
-echo -n '78781101035595109291885836053202003906890D0A' | xxd -r -ps | nc 40.115.232.141 21105 | hexdump -C
-echo -n '78781101035595109134748936080642000115FC0D0A' | xxd -r -ps | nc 40.115.232.141 21105 | hexdump -C
-echo -n '78781101035595109134748936080642000115FC0D0A' | xxd -r -ps | nc 40.115.232.141 21105 | hexdump -C
-
-78 78 11 01 03 55 95 10 91 34 74 89 36 08 06 42 00 01 15 FC 0D 0A
-78 78 0C 01 13 0C 0D 02 39 0C 00 00 01 F6 EC 0D 0A
-79 79 00 06 98 00 00 00 C7 00 0D 0A
-78 78 0B 23 01 01 92 04 00 01 00 03 4B 7F 0D 0A
-78 78 05 23 00 03 4C 4D 0D 0A
-78 78 0B 23 01 01 92 04 00 01 00 04 3F C0 0D 0A
-78 78 05 23 00 04 38 F2 0D 0A
-78 78 0B 23 01 01 93 04 00 01 00 05 2A 62 0D 0A
-78 78 05 23 00 05 29 7B 0D 0A
-78 78 0B 23 01 01 93 04 00 01 00 06 18 F9 0D 0A
-78 78 05 23 00 06 1B E0 0D 0A
-78 78 0B 23 01 01 93 04 00 01 00 07 09 70 0D 0A
-78 78 05 23 00 07 0A 69 0D 0A
-78 78 0B 23 01 01 93 04 00 01 00 08 F1 87 0D 0A
-78 78 05 23 00 08 F2 9E 0D 0A
-78 78 0B 23 01 01 91 04 00 01 00 09 E8 58 0D 0A
-78 78 05 23 00 09 E3 17 0D 0A
-*/
-
-// Login
-Concox.compare(
-  ConcoxLogin.buildTerminal([0x03, 0x55, 0x95, 0x10, 0x91, 0x34, 0x74, 0x89], [0x36, 0x08], 1, 1),
-  Concox.toBinary('78 78 11 01 03 55 95 10 91 34 74 89 36 08 06 42 00 01 15 FC 0D 0A'));
-
-Concox.compare(
-  ConcoxLogin.buildServer(19, 12, 13, 2, 57, 12, [], 1),
-  Concox.toBinary('78 78 0C 01 13 0C 0D 02 39 0C 00 00 01 F6 EC 0D 0A'));
-
-//console.log(ConcoxLogin.parseTerminal(Concox.toBinary('78 78 11 01 03 55 95 10 91 34 74 89 36 08 06 42 00 01 15 FC 0D 0A')));
-//console.log(ConcoxLogin.parseServer(Concox.toBinary('78 78 0C 01 13 0C 0D 02 39 0C 00 00 01 F6 EC 0D 0A')));
-
-console.log(ConcoxInformationTransmission.parseServer(Concox.toBinary('79 79 00 06 98 00 00 00 C7 00 0D 0A')));
-
-//console.log(ConcoxHeartbeat.parseTerminal(Concox.toBinary('78 78 0B 23 01 01 92 04 00 01 00 03 4B 7F 0D 0A')));
-//console.log(ConcoxHeartbeat.parseServer(Concox.toBinary('78 78 05 23 00 03 4C 4D 0D 0A')));
-
-//console.log(ConcoxHeartbeat.parseTerminal(Concox.toBinary('78 78 0B 23 01 01 92 04 00 01 00 04 3F C0 0D 0A')));
-//console.log(ConcoxHeartbeat.parseServer(Concox.toBinary('78 78 05 23 00 04 38 F2 0D 0A')));
+module.exports = {
+  Concox,
+  ServerLogin,
+  ServerHeartbeat,
+  ServerInformationTransmission,
+  TerminalLogin,
+  TerminalHeartbeat,
+  TerminalInformationTransmission
+};
