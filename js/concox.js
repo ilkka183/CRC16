@@ -15,8 +15,8 @@ class Concox {
     return crc16_x25.calculate(data);
   }
 
-  static crcRange(data, index, count, encrypted = false) {
-    const slice = data.slice(index, count);
+  static crcRange(data, start, end, encrypted = false) {
+    const slice = data.slice(start, end);
     return Concox.crc(slice, encrypted);
   }
 

@@ -1,5 +1,7 @@
 <?php
 
+include_once 'concox.php';
+
 
 class ConcoxWriter {
   private $data = array();

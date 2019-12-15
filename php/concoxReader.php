@@ -1,5 +1,7 @@
 <?php
 
+include_once 'concox.php';
+
 
 class ConcoxReader {
   private $data;
@@ -76,7 +78,7 @@ class ConcoxReader {
   
     // Error check
     $errorCheck = $this->peekWord(count($this->data) - 4);
-    $crc = Concox::crcRange($this->data, 2, count($this->data) - 4, $encryptedCrc);
+    $crc = Concox::crcRange($this->data, 2, count($this->data) - 6, $encryptedCrc);
 
     if ($errorCheck !== $crc)
       throw new Exception('Invalid error check code');

@@ -41,10 +41,7 @@ class ConcoxInformationTransmissionServer {
     const writer = new ConcoxWriter(0x98);
 
     writer.writeByte(reservedExtensionBit.length);
-
-    if (reservedExtensionBit.length > 0)
-      writer.writeByte(reservedExtensionBit);
-
+    writer.writeBytes(reservedExtensionBit);
     writer.writeWord(informationSerialNumber);
 
     return writer.encapsulate();

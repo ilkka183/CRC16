@@ -1,10 +1,14 @@
 <?php
 
-include 'concox.php';
-include 'concoxLogin.php';
+include_once 'concox.php';
+include_once 'concoxLogin.php';
+include_once 'concoxHeartbeat.php';
+include_once 'concoxInformationTransmission.php';
 
 
-function compare($data1, $data2) {
+function build($data1, $hex2) {
+  $data2 = Concox::toBinary($hex2);
+
   echo '<tr>';
 
   echo '<td>';
@@ -18,6 +22,20 @@ function compare($data1, $data2) {
   }
   else
     echo Concox::toHex($data1);
+
+  echo '</code>';
+  echo '</td>';
+
+  echo '</tr>';
+}
+
+function parse($object) {
+  echo '<tr>';
+
+  echo '<td>';
+  echo '<code>';
+
+  echo json_encode($object);
 
   echo '</code>';
   echo '</td>';
@@ -59,39 +77,53 @@ function check($title, $hex, $encrypted = false) {
 </head>
 <body>
 
-<h2>Packets</h2>
+<h2>Build</h2>
 <table border="1">
   <tr><th>Data</th></tr>
 <?php
-  compare(
+  build(
     ConcoxLoginTerminal::build(array(0x03, 0x55, 0x95, 0x10, 0x91, 0x34, 0x74, 0x89), array(0x36, 0x08), 1, 1),
-    Concox::toBinary('78 78 11 01 03 55 95 10 91 34 74 89 36 08 06 42 00 01 15 FC 0D 0A'));
+    '78 78 11 01 03 55 95 10 91 34 74 89 36 08 06 42 00 01 15 FC 0D 0A');
 
-  compare(
+  build(
     ConcoxLoginServer::build(19, 12, 13, 2, 57, 12, array(), 1),
-    Concox::toBinary('78 78 0C 01 13 0C 0D 02 39 0C 00 00 01 F6 EC 0D 0A'));
+    '78 78 0C 01 13 0C 0D 02 39 0C 00 00 01 F6 EC 0D 0A');
 
-/*
-  compare(
+  build(
     ConcoxInformationTransmissionServer::build(array(), 0),
-    Concox::toBinary('79 79 00 06 98 00 00 00 C7 00 0D 0A'));
+    '79 79 00 06 98 00 00 00 C7 00 0D 0A');
 
-  compare(
+  build(
     ConcoxHeartbeatTerminal::build(1, 402, 4, 1, 3),
-    Concox::toBinary('78 78 0B 23 01 01 92 04 00 01 00 03 4B 7F 0D 0A'));
+    '78 78 0B 23 01 01 92 04 00 01 00 03 4B 7F 0D 0A');
 
-  compare(
+  build(
     ConcoxHeartbeatServer::build(3),
-    Concox::toBinary('78 78 05 23 00 03 4C 4D 0D 0A'));
+    '78 78 05 23 00 03 4C 4D 0D 0A');
 
-  compare(
+  build(
     ConcoxHeartbeatTerminal::build(1, 402, 4, 1, 4),
-    Concox::toBinary('78 78 0B 23 01 01 92 04 00 01 00 04 3F C0 0D 0A'));
+    '78 78 0B 23 01 01 92 04 00 01 00 04 3F C0 0D 0A');
 
-  compare(
+  build(
     ConcoxHeartbeatServer::build(4),
-    Concox::toBinary('78 78 05 23 00 04 38 F2 0D 0A'));
-*/
+    '78 78 05 23 00 04 38 F2 0D 0A');
+?>
+</table>
+
+<h2>Parse</h2>
+<table border="1">
+  <tr><th>Data</th></tr>
+<?php
+  parse(ConcoxLoginTerminal::parse(Concox::toBinary('78 78 11 01 03 55 95 10 91 34 74 89 36 08 06 42 00 01 15 FC 0D 0A')));
+  parse(ConcoxLoginServer::parse(Concox::toBinary('78 78 0C 01 13 0C 0D 02 39 0C 00 00 01 F6 EC 0D 0A')));
+  parse(ConcoxInformationTransmissionServer::parse(Concox::toBinary('79 79 00 06 98 00 00 00 C7 00 0D 0A')));
+
+  parse(ConcoxHeartbeatTerminal::parse(Concox::toBinary('78 78 0B 23 01 01 92 04 00 01 00 03 4B 7F 0D 0A')));
+  parse(ConcoxHeartbeatServer::parse(Concox::toBinary('78 78 05 23 00 03 4C 4D 0D 0A')));
+
+  parse(ConcoxHeartbeatTerminal::parse(Concox::toBinary('78 78 0B 23 01 01 92 04 00 01 00 04 3F C0 0D 0A')));
+  parse(ConcoxHeartbeatServer::parse(Concox::toBinary('78 78 05 23 00 04 38 F2 0D 0A')));
 ?>
 </table>
 

@@ -1,6 +1,6 @@
 <?php
 
-include 'crc16.php';
+include_once 'crc16.php';
 
 $crc16_x25 = new Crc16(0x8408);
 $crc16_x25->createTable();
@@ -19,7 +19,7 @@ class Concox {
   }
 
   public static function crcRange($data, $index, $count, $encrypted = false) {
-    $slice = $data->slice($index, $count);
+    $slice = array_slice($data, $index, $count);
     return Concox::crc($slice, $encrypted);
   }
 

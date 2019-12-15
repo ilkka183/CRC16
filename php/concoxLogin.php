@@ -1,7 +1,7 @@
 <?php
 
-include 'concoxReader.php';
-include 'concoxWriter.php';
+include_once 'concoxReader.php';
+include_once 'concoxWriter.php';
 
 
 class ConcoxLoginTerminal {
@@ -43,7 +43,7 @@ class ConcoxLoginTerminal {
     $informationSerialNumber = $reader->readWord();
 
     return array(
-      'protocolNumber' => $reader->protocolNumber,
+      'protocolNumber' => $reader->getProtocolNumber(),
       'infoContent' => $infoContent,
       'informationSerialNumber' => $informationSerialNumber
     );
@@ -63,10 +63,7 @@ class ConcoxLoginServer {
     $writer->writeByte($second);
 
     $writer->writeByte(count($reservedExtensionBit));
-
-    if (count($reservedExtensionBit) > 0)
-      $writer->writeByte($reservedExtensionBit);
-
+    $writer->writeBytes($reservedExtensionBit);
     $writer->writeWord($informationSerialNumber);
 
     return $writer->encapsulate();
@@ -88,15 +85,15 @@ class ConcoxLoginServer {
       'day' => $day,
       'hour' => $hour,
       'min' => $min,
-      'second' => $sec
+      'second' => $second
     );
 
     $reservedExtensionBitLength = $reader->readByte();
-    $reservedExtensionBit = $reader->readBytes(reservedExtensionBitLength);
+    $reservedExtensionBit = $reader->readBytes($reservedExtensionBitLength);
     $informationSerialNumber = $reader->readWord();
 
     return array(
-      'protocolNumber' => $reader->protocolNumber,
+      'protocolNumber' => $reader->getProtocolNumber(),
       'dateTime' => $dateTime,
       'reservedExtensionBitLength' => $reservedExtensionBitLength,
       'reservedExtensionBit' => $reservedExtensionBit,
