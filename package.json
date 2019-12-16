@@ -15,5 +15,6 @@
   "bugs": {
     "url": "https://github.com/ilkka183/CRC16/issues"
   },
-  "homepage": "https://github.com/ilkka183/CRC16#readme"
+  "homepage": "https://github.com/ilkka183/CRC16#readme",
+  "devDependencies": {}
 }

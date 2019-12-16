@@ -3,6 +3,38 @@ const ConcoxWriter = require('./concoxWriter');
 
 
 class ConcoxLoginTerminal {
+  static imeiToBinary(imei) {
+    const imeiLength = 16;
+
+    while (imei.length < imeiLength)
+      imei = '0' + imei;
+
+    const data = [];
+
+    for (let i = 0; i < imeiLength; i += 2) {
+      const upper = parseInt(imei[i], 16);
+      const lower = parseInt(imei[i + 1], 16);
+
+      data.push(upper << 4 | lower);
+    }
+
+    return data;
+  }
+
+  static imeiToString(imei) {
+    let str = '';
+
+    for (let value of imei) {
+      const upper = value >> 4;
+      const lower = value & 0x0F;
+
+      str += upper.toString(16);
+      str += lower.toString(16);
+    }
+
+    return str;
+  }
+
   static timeZoneLanguage(timeZone) {
     let result = Math.abs(timeZone)*100 << 4;
 
@@ -17,7 +49,7 @@ class ConcoxLoginTerminal {
   static build(imei, modelIdentificationCode, timeZone, informationSerialNumber) {
     const writer = new ConcoxWriter(0x01);
 
-    writer.writeBytes(imei);
+    writer.writeBytes(ConcoxLoginTerminal.imeiToBinary(imei));
     writer.writeBytes(modelIdentificationCode);
     writer.writeWord(ConcoxLoginTerminal.timeZoneLanguage(timeZone));
     writer.writeWord(informationSerialNumber);
@@ -28,7 +60,7 @@ class ConcoxLoginTerminal {
   static parse(data) {
     const reader = new ConcoxReader(data, 0x01, true);
 
-    const imei = reader.readBytes(8);
+    const imei = ConcoxLoginTerminal.imeiToString(reader.readBytes(8));
     const modelIdentificationCode = reader.readBytes(2);
     const timeZoneLanguage = reader.readWord();
 
@@ -50,15 +82,15 @@ class ConcoxLoginTerminal {
 
 
 class ConcoxLoginServer {
-  static build(year, month, day, hour, min, second, reservedExtensionBit, informationSerialNumber) {
+  static build(dateTime, reservedExtensionBit, informationSerialNumber) {
     const writer = new ConcoxWriter(0x01);
 
-    writer.writeByte(year);
-    writer.writeByte(month);
-    writer.writeByte(day);
-    writer.writeByte(hour);
-    writer.writeByte(min);
-    writer.writeByte(second);
+    writer.writeByte(dateTime.year);
+    writer.writeByte(dateTime.month);
+    writer.writeByte(dateTime.day);
+    writer.writeByte(dateTime.hour);
+    writer.writeByte(dateTime.min);
+    writer.writeByte(dateTime.second);
 
     writer.writeByte(reservedExtensionBit.length);
     writer.writeBytes(reservedExtensionBit);
