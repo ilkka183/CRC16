@@ -1,35 +1,31 @@
 const net = require('net');
 const { ConcoxLoginTerminal } = require('./concoxLogin');
+const { ConcoxHeartbeatTerminal } = require('./concoxHeartbeat');
 
 const HOST = 'localhost';
 const PORT = 1234;
 
 
-class ConcoxClient {
-  constructor(host, port) {
-    this.host = host || HOST;
-    this.port = port || PORT;
+class ConcoxTerminal {
+  constructor(imei, modelIdentificationCode, host = HOST, port = PORT) {
+    this.imei = imei,
+    this.modelIdentificationCode = modelIdentificationCode;
+    this.host = host;
+    this.port = port;
     this.client = null;
-  }
-
-  get address() {
-    return this.host + ':' + this.port;
+    this.informationSerialNumber = 0;
   }
 
   send(data) {
-    this.client = new net.Socket();
- 
-    this.client.connect(this.port, this.host, () => {
-      console.log('Client connected to ' + this.address);
+    this.client = net.createConnection(this.port, this.host, () => {
+      console.log('Connection local address: ' + this.client.localAddress + ':' + this.client.localPort);
+      console.log('Connection remote address: ' + this.client.remoteAddress + ':' + this.client.remotePort);
+      
       this.client.write(Buffer.from(data));
     });
-     
+ 
     this.client.on('data', (data) => {
       console.log('Client received:', data.toString('hex'));
-    
-      if (data.toString().endsWith('exit')) {
-        this.client.destroy();
-      }
     });
      
     this.client.on('close', () => {
@@ -40,7 +36,20 @@ class ConcoxClient {
       console.error(err);
     });
   }
+
+  login(timeZone) {
+    this.informationSerialNumber = 1;
+    this.send(ConcoxLoginTerminal.build(this.imei, this.modelIdentificationCode, timeZone, this.informationSerialNumber));
+  }
+
+  heartbeat() {
+    this.informationSerialNumber++;
+    this.send(ConcoxHeartbeatTerminal.build(1, 402, 4, 1, this.informationSerialNumber));
+  }
 }
 
-const client = new ConcoxClient();
-client.send(ConcoxLoginTerminal.build('0355951091347489', [0x36, 0x08], 1, 1));
+const terminal = new ConcoxTerminal('0355951091347489', [0x36, 0x08]);
+terminal.login(1);
+//terminal.heartbeat();
+//terminal.heartbeat();
+//terminal.heartbeat();
