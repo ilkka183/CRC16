@@ -28,10 +28,14 @@ class ConcoxLoginTerminal {
   static parse(data) {
     const reader = new ConcoxReader(data, 0x01, true);
 
+    const imei = reader.readBytes(8);
+    const modelIdentificationCode = reader.readBytes(2);
+    const timeZoneLanguage = reader.readWord();
+
     const infoContent = {
-      imei: reader.readBytes(8),
-      modelIdentificationCode: reader.readBytes(2),
-      timeZoneLanguage: reader.readWord()
+      imei,
+      modelIdentificationCode,
+      timeZoneLanguage
     }
 
     const informationSerialNumber = reader.readWord();
@@ -66,13 +70,20 @@ class ConcoxLoginServer {
   static parse(data) {
     const reader = new ConcoxReader(data, 0x01);
 
+    const year = reader.readByte();
+    const month = reader.readByte();
+    const day = reader.readByte();
+    const hour = reader.readByte();
+    const min = reader.readByte();
+    const second = reader.readByte();
+
     const dateTime = {
-      year: reader.readByte(),
-      month: reader.readByte(),
-      day: reader.readByte(),
-      hour: reader.readByte(),
-      min: reader.readByte(),
-      second: reader.readByte()
+      year,
+      month,
+      day,
+      hour,
+      min,
+      second
     }
 
     const reservedExtensionBitLength = reader.readByte();
