@@ -2,12 +2,12 @@ const Concox = require('./concox');
 
 
 class ConcoxReader {
-  constructor(data, protocolNumber, encryptedCrc = false) {
+  constructor(data, terminal = false) {
     this.data = data;
     this.index = 0;
-    this.protocolNumber = protocolNumber;
+    this.protocolNumber = undefined;
     
-    this.readHeader(encryptedCrc);
+    this.readHeader(terminal);
   }
 
   peekByte() {
@@ -17,6 +17,13 @@ class ConcoxReader {
   peekWord(offset = 0) {
     const upper = this.data[this.index + offset];
     const lower = this.data[this.index + offset + 1];
+
+    return (upper << 8) | lower;
+  }
+
+  peekWordAt(index) {
+    const upper = this.data[index];
+    const lower = this.data[index + 1];
 
     return (upper << 8) | lower;
   }
@@ -50,43 +57,38 @@ class ConcoxReader {
     return result;
   }
 
-  readHeader(encryptedCrc) {
-    const startBit = (this.protocolNumber === 0x98) ? [0x79, 0x79] : [0x78, 0x78];
-    const stopBit = [0x0D, 0x0A];
-
+  readHeader(terminal) {
     // Start bit
-    let bit = this.peekBytes(2);
+    const startBit = this.peekBytes(2);
 
-    if (!Concox.equals(bit, startBit))
+    if (!Concox.equals(startBit, [0x79, 0x79]) && !Concox.equals(startBit, [0x78, 0x78]))
       throw new Error('Invalid start bit');
 
     // Stop bit
-    bit = this.peekBytes(2, this.data.length - 2);
+    const stopBit = this.peekBytes(2, this.data.length - 2);
 
-    if (!Concox.equals(bit, stopBit))
+    if (!Concox.equals(stopBit, [0x0D, 0x0A]))
       throw new Error('Invalid stop bit');
   
-    // Error check
-    const errorCheck = this.peekWord(this.data.length - 4);
-    const crc = Concox.crcRange(this.data, 2, this.data.length - 4, encryptedCrc);
-
-    if (errorCheck !== crc)
-      throw new Error('Invalid error check code');
-    
     this.readBytes(2); // start bit
 
     // Packet length
-    const packetLength = (this.protocolNumber === 0x98) ? this.readWord() : this.readByte();
-    const offset = (this.protocolNumber === 0x98) ? 6 : 5;
+    const packetLength = (Concox.equals(startBit, [0x79, 0x79])) ? this.readWord() : this.readByte();
+    const offset = (Concox.equals(startBit, [0x79, 0x79])) ? 6 : 5;
 
     if (packetLength !== this.data.length - offset)
       throw new Error('Invalid packet length');
 
     // Protocol number
-    const protocolNumber = this.readByte();
+    this.protocolNumber = this.readByte();
 
-    if (protocolNumber != this.protocolNumber)
-      throw new Error('Invalid protocol number');
+    // Error check
+    const encryptedCrc = terminal && (this.protocolNumber === 0x01)
+    const errorCheck = this.peekWordAt(this.data.length - 4);
+    const crc = Concox.crcRange(this.data, 2, this.data.length - 4, encryptedCrc);
+
+    if (errorCheck !== crc)
+      throw new Error('Invalid error check code');
   }
 }
 

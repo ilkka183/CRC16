@@ -2,7 +2,7 @@ const ConcoxReader = require('./concoxReader');
 const ConcoxWriter = require('./concoxWriter');
 
 
-class ConcoxInformationTransmissionTerminal {
+class ConcoxTerminalInformationTransmission {
   static build(terminalInformationContent, voltageLevel, gsmSignalLength, languageExtend, informationSerialNumber) {
     const writer = new ConcoxWriter(0x98);
 
@@ -15,9 +15,7 @@ class ConcoxInformationTransmissionTerminal {
     return writer.encapsulate();
   }
 
-  static parse(data) {
-    const reader = new ConcoxReader(data, 0x98);
-
+  static parse(reader) {
     const infoContent = {
       terminalInformationContent: reader.readByte(),
       voltageLevel: reader.readWord(),
@@ -36,7 +34,7 @@ class ConcoxInformationTransmissionTerminal {
 }
 
 
-class ConcoxInformationTransmissionServer {
+class ConcoxServerInformationTransmission {
   static build(reservedExtensionBit, informationSerialNumber) {
     const writer = new ConcoxWriter(0x98);
 
@@ -47,9 +45,7 @@ class ConcoxInformationTransmissionServer {
     return writer.encapsulate();
   }
 
-  static parse(data) {
-    const reader = new ConcoxReader(data, 0x98);
-
+  static parse(reader) {
     const reservedExtensionBitLength = reader.readByte();
     const reservedExtensionBit = reader.readBytes(reservedExtensionBitLength);
     const informationSerialNumber = reader.readWord();
@@ -63,4 +59,4 @@ class ConcoxInformationTransmissionServer {
   }
 }
 
-module.exports = { ConcoxInformationTransmissionTerminal, ConcoxInformationTransmissionServer };
+module.exports = { ConcoxTerminalInformationTransmission, ConcoxServerInformationTransmission };

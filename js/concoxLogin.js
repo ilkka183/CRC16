@@ -2,7 +2,7 @@ const ConcoxReader = require('./concoxReader');
 const ConcoxWriter = require('./concoxWriter');
 
 
-class ConcoxLoginTerminal {
+class ConcoxTerminalLogin {
   static imeiToBinary(imei) {
     const imeiLength = 16;
 
@@ -49,18 +49,16 @@ class ConcoxLoginTerminal {
   static build(imei, modelIdentificationCode, timeZone, informationSerialNumber) {
     const writer = new ConcoxWriter(0x01);
 
-    writer.writeBytes(ConcoxLoginTerminal.imeiToBinary(imei));
+    writer.writeBytes(ConcoxTerminalLogin.imeiToBinary(imei));
     writer.writeBytes(modelIdentificationCode);
-    writer.writeWord(ConcoxLoginTerminal.timeZoneLanguage(timeZone));
+    writer.writeWord(ConcoxTerminalLogin.timeZoneLanguage(timeZone));
     writer.writeWord(informationSerialNumber);
 
     return writer.encapsulate(true);
   }
 
-  static parse(data) {
-    const reader = new ConcoxReader(data, 0x01, true);
-
-    const imei = ConcoxLoginTerminal.imeiToString(reader.readBytes(8));
+  static parse(reader) {
+    const imei = ConcoxTerminalLogin.imeiToString(reader.readBytes(8));
     const modelIdentificationCode = reader.readBytes(2);
     const timeZoneLanguage = reader.readWord();
 
@@ -81,7 +79,7 @@ class ConcoxLoginTerminal {
 }
 
 
-class ConcoxLoginServer {
+class ConcoxServerLogin {
   static build(dateTime, reservedExtensionBit, informationSerialNumber) {
     const writer = new ConcoxWriter(0x01);
 
@@ -99,9 +97,7 @@ class ConcoxLoginServer {
     return writer.encapsulate();
   }
 
-  static parse(data) {
-    const reader = new ConcoxReader(data, 0x01);
-
+  static parse(reader) {
     const year = reader.readByte();
     const month = reader.readByte();
     const day = reader.readByte();
@@ -132,4 +128,4 @@ class ConcoxLoginServer {
   }
 }
 
-module.exports = { ConcoxLoginTerminal, ConcoxLoginServer };
+module.exports = { ConcoxTerminalLogin, ConcoxServerLogin };

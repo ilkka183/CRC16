@@ -2,7 +2,7 @@ const ConcoxReader = require('./concoxReader');
 const ConcoxWriter = require('./concoxWriter');
 
 
-class ConcoxHeartbeatTerminal {
+class ConcoxTerminalHeartbeat {
   static build(terminalInformationContent, voltageLevel, gsmSignalLength, languageExtend, informationSerialNumber) {
     const writer = new ConcoxWriter(0x23);
 
@@ -16,9 +16,7 @@ class ConcoxHeartbeatTerminal {
     return writer.encapsulate();
   }
 
-  static parse(data) {
-    const reader = new ConcoxReader(data, 0x23);
-
+  static parse(reader) {
     const infoContent = {
       terminalInformationContent: reader.readByte(),
       voltageLevel: reader.readWord(),
@@ -37,7 +35,7 @@ class ConcoxHeartbeatTerminal {
 }
 
 
-class ConcoxHeartbeatServer {
+class ConcoxServerHeartbeat {
   static build(informationSerialNumber) {
     const writer = new ConcoxWriter(0x23);
 
@@ -46,9 +44,7 @@ class ConcoxHeartbeatServer {
     return writer.encapsulate();
   }
 
-  static parse(data) {
-    const reader = new ConcoxReader(data, 0x23);
-
+  static parse(reader) {
     const informationSerialNumber = reader.readWord();
 
     return {
@@ -58,4 +54,4 @@ class ConcoxHeartbeatServer {
   }
 }
 
-module.exports = { ConcoxHeartbeatTerminal, ConcoxHeartbeatServer };
+module.exports = { ConcoxTerminalHeartbeat, ConcoxServerHeartbeat };
