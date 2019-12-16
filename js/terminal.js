@@ -1,6 +1,6 @@
 const net = require('net');
-const { ConcoxLoginTerminal } = require('./concoxLogin');
-const { ConcoxHeartbeatTerminal } = require('./concoxHeartbeat');
+const { ConcoxTerminalLogin } = require('./concoxLogin');
+const { ConcoxTerminalHeartbeat } = require('./concoxHeartbeat');
 
 const HOST = 'localhost';
 const PORT = 1234;
@@ -39,12 +39,12 @@ class ConcoxTerminal {
 
   login(timeZone) {
     this.informationSerialNumber = 1;
-    this.send(ConcoxLoginTerminal.build(this.imei, this.modelIdentificationCode, timeZone, this.informationSerialNumber));
+    this.send(ConcoxTerminalLogin.build(this.imei, this.modelIdentificationCode, timeZone, this.informationSerialNumber));
   }
 
   heartbeat() {
     this.informationSerialNumber++;
-    this.send(ConcoxHeartbeatTerminal.build(1, 402, 4, 1, this.informationSerialNumber));
+    this.send(ConcoxTerminalHeartbeat.build(1, 402, 4, 1, this.informationSerialNumber));
   }
 }
 
