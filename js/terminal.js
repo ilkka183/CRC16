@@ -1,6 +1,7 @@
 const net = require('net');
 const { ConcoxTerminalLogin } = require('./concoxLogin');
 const { ConcoxTerminalHeartbeat } = require('./concoxHeartbeat');
+const { ConcoxTerminalInformationTransmission } = require('./concoxInformationTransmission');
 
 const HOST = 'localhost';
 const PORT = 1234;
@@ -21,7 +22,9 @@ class ConcoxTerminal {
       console.log('Connection local address: ' + this.client.localAddress + ':' + this.client.localPort);
       console.log('Connection remote address: ' + this.client.remoteAddress + ':' + this.client.remotePort);
       
-      this.client.write(Buffer.from(data));
+      const buffer = Buffer.from(data);
+      this.client.write(buffer);
+      console.log('Client sent:', buffer.toString('hex'));
     });
  
     this.client.on('data', (data) => {
@@ -58,4 +61,4 @@ terminal.login(1);
 //terminal.heartbeat();
 //terminal.heartbeat();
 //terminal.heartbeat();
-terminal.informationTransmission();
+//terminal.informationTransmission();

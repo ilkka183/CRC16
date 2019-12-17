@@ -39,7 +39,11 @@ class ConcoxServer {
   }
 
   response(connection, data) {
-    connection.write(Buffer.from(data));
+    const buffer = Buffer.from(data);
+
+    console.log('Server sent: ' + buffer.toString('hex'));
+
+    connection.write(buffer);
     connection.end();
   }
 
