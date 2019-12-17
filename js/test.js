@@ -35,7 +35,7 @@ function testOnlineCommand() {
 //  Concox.compare(ConcoxServerOnlineCommand.build('UNLOCK#', 1), Concox.toBinary(server));
 //  Concox.compare(ConcoxTerminalOnlineCommand.build(192, 290, 4, 1, 8), Concox.toBinary(terminal));
 
-//  console.log(ConcoxServerPacket.parse(Concox.toBinary(server)));
+  console.log(ConcoxServerPacket.parse(Concox.toBinary(server)));
   console.log(ConcoxTerminalPacket.parse(Concox.toBinary(terminal)));
 }
 

@@ -29,6 +29,7 @@ class ConcoxTerminal extends ConcoxDevice {
  
     this.client.on('data', (data) => {
       this.log('Server response', data);
+      this.client.end();
     });
      
     this.client.on('close', () => {
@@ -70,8 +71,8 @@ SERVER,0,185.26.50.123,1234,0#
 const imei = '355951091347489';
 const modelIdentificationCode = [0x36, 0x08];
 
-const host = '185.26.50.123';
-//const host = 'localhost';
+//const host = '185.26.50.123';
+const host = 'localhost';
 
 const terminal = new ConcoxTerminal(imei, modelIdentificationCode, host);
 terminal.login(100, 1);

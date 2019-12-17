@@ -3,6 +3,7 @@ const ConcoxDevice = require('./device');
 const { ConcoxTerminalPacket } = require('./concoxPacket');
 const { ConcoxServerLogin } = require('./concoxLogin');
 const { ConcoxServerHeartbeat } = require('./concoxHeartbeat');
+const { ConcoxServerOnlineCommand } = require('./concoxOnlineCommand');
 const { ConcoxServerInformationTransmission } = require('./concoxInformationTransmission');
 
 class ConcoxServer extends ConcoxDevice {
@@ -26,6 +27,10 @@ class ConcoxServer extends ConcoxDevice {
           connection,
           ConcoxServerHeartbeat.build(packet.informationSerialNumber));
 
+        this.response(
+          connection,
+          ConcoxServerOnlineCommand.build('UNLOCK#', packet.informationSerialNumber));
+
         break;
 
       case 0x98:
@@ -42,9 +47,7 @@ class ConcoxServer extends ConcoxDevice {
 
     this.log('Server response', buffer);
 
-    connection.write(buffer, () => {
-      connection.end();
-    });
+    connection.write(buffer);
   }
 
   start() {
