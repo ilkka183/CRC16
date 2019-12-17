@@ -6,6 +6,7 @@ const { ConcoxServerHeartbeat } = require('./concoxHeartbeat');
 const { ConcoxServerOnlineCommand } = require('./concoxOnlineCommand');
 const { ConcoxServerInformationTransmission } = require('./concoxInformationTransmission');
 
+
 class ConcoxServer extends ConcoxDevice {
   constructor(port = ConcoxDevice.defaultPort) {
     super();
