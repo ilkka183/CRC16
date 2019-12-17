@@ -53,6 +53,15 @@ class ConcoxReader {
     return (upper << 8) | lower;
   }
 
+  readString(length) {
+    let result = '';
+
+    for (let i = 0; i < length; i++ )
+      result += String.fromCharCode(this.readByte());
+
+    return result;
+  }
+
   readBytes(count) {
     const result = [];
 
@@ -62,7 +71,7 @@ class ConcoxReader {
     return result;
   }
 
-  readHeader(terminal) {
+  readHeader(isTerminal) {
     // Start bytes
     const startBytes = this.peekBytes(2);
 
@@ -71,7 +80,7 @@ class ConcoxReader {
 
     const packetLengthBytes = Concox.equals(startBytes, [0x79, 0x79]) ? 2 : 1;
 
-      // Stop bytes
+    // Stop bytes
     const stopBytes = this.peekBytes(2, this.data.length - 2);
 
     if (!Concox.equals(stopBytes, [0x0D, 0x0A]))
@@ -90,7 +99,7 @@ class ConcoxReader {
     this.protocolNumber = this.readByte();
 
     // Error check
-    const encryptedCrc = terminal && (this.protocolNumber === 0x01)
+    const encryptedCrc = isTerminal && (this.protocolNumber === 0x01)
     const errorCheck = this.peekWordAt(this.data.length - 4);
     const crc = Concox.crcRange(this.data, 2, this.data.length - 4, encryptedCrc);
 

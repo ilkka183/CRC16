@@ -1,14 +1,15 @@
 const net = require('net');
+const ConcoxDevice = require('./device');
 const { ConcoxTerminalLogin } = require('./concoxLogin');
 const { ConcoxTerminalHeartbeat } = require('./concoxHeartbeat');
 const { ConcoxTerminalInformationTransmission } = require('./concoxInformationTransmission');
 
 const HOST = 'localhost';
-const PORT = 1234;
 
 
-class ConcoxTerminal {
-  constructor(imei, modelIdentificationCode, host = HOST, port = PORT) {
+class ConcoxTerminal extends ConcoxDevice {
+  constructor(imei, modelIdentificationCode, host = HOST, port = ConcoxDevice.defaultPort) {
+    super();
     this.imei = imei,
     this.modelIdentificationCode = modelIdentificationCode;
     this.host = host;
@@ -21,14 +22,13 @@ class ConcoxTerminal {
     this.client = net.createConnection(this.port, this.host, () => {
       console.log('Connection local address: ' + this.client.localAddress + ':' + this.client.localPort);
       console.log('Connection remote address: ' + this.client.remoteAddress + ':' + this.client.remotePort);
-      
-      const buffer = Buffer.from(data);
-      this.client.write(buffer);
-      console.log('Client sent:', buffer.toString('hex'));
+    
+      this.log('Client request', data);
+      this.client.write(data);
     });
  
     this.client.on('data', (data) => {
-      console.log('Client received:', data.toString('hex'));
+      this.log('Server response', data);
     });
      
     this.client.on('close', () => {
@@ -40,24 +40,41 @@ class ConcoxTerminal {
     });
   }
 
-  login(timeZone) {
-    this.informationSerialNumber = 1;
-    this.send(ConcoxTerminalLogin.build(this.imei, this.modelIdentificationCode, timeZone, this.informationSerialNumber));
+  sendPacket(data) {
+    this.send(Buffer.from(data));
+  }  
+
+  login(timeZone, informationSerialNumber) {
+    this.informationSerialNumber = informationSerialNumber;
+    this.sendPacket(ConcoxTerminalLogin.build(this.imei, this.modelIdentificationCode, timeZone, this.informationSerialNumber));
   }
 
   heartbeat() {
     this.informationSerialNumber++;
-    this.send(ConcoxTerminalHeartbeat.build(1, 402, 4, 1, this.informationSerialNumber));
+    this.sendPacket(ConcoxTerminalHeartbeat.build(1, 402, 4, 1, this.informationSerialNumber));
   }
 
   informationTransmission() {
     this.informationSerialNumber++;
-    this.send(ConcoxTerminalInformationTransmission.build(1, 402, 4, 1, this.informationSerialNumber));
+    this.sendPacket(ConcoxTerminalInformationTransmission.build(1, 402, 4, 1, this.informationSerialNumber));
   }
 }
 
-const terminal = new ConcoxTerminal('0355951091347489', [0x36, 0x08]);
-terminal.login(1);
+/*
+
+SERVER,0,185.26.50.123,1234,0#
+044 950 9899
+
+*/
+
+const imei = '355951091347489';
+const modelIdentificationCode = [0x36, 0x08];
+
+const host = '185.26.50.123';
+//const host = 'localhost';
+
+const terminal = new ConcoxTerminal(imei, modelIdentificationCode, host);
+terminal.login(100, 1);
 //terminal.heartbeat();
 //terminal.heartbeat();
 //terminal.heartbeat();

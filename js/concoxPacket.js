@@ -1,6 +1,7 @@
 const ConcoxReader = require('./concoxReader');
 const { ConcoxTerminalLogin, ConcoxServerLogin } = require('./concoxLogin');
 const { ConcoxTerminalHeartbeat, ConcoxServerHeartbeat } = require('./concoxHeartbeat');
+const { ConcoxTerminalOnlineCommand, ConcoxServerOnlineCommand } = require('./concoxOnlineCommand');
 const { ConcoxTerminalInformationTransmission, ConcoxServerInformationTransmission } = require('./concoxInformationTransmission');
 
 
@@ -10,6 +11,7 @@ class ConcoxTerminalPacket {
  
     switch (reader.protocolNumber) {
       case 0x01: return ConcoxTerminalLogin.parse(reader);
+      case 0x21: return ConcoxTerminalOnlineCommand.parse(reader);
       case 0x23: return ConcoxTerminalHeartbeat.parse(reader);
       case 0x98: return ConcoxTerminalInformationTransmission.parse(reader);
     }
@@ -26,6 +28,7 @@ class ConcoxServerPacket {
     switch (reader.protocolNumber) {
       case 0x01: return ConcoxServerLogin.parse(reader);
       case 0x23: return ConcoxServerHeartbeat.parse(reader);
+      case 0x80: return ConcoxServerOnlineCommand.parse(reader);
       case 0x98: return ConcoxServerInformationTransmission.parse(reader);
     }
 

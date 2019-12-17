@@ -2,6 +2,7 @@ const Concox = require('./concox');
 const { ConcoxTerminalPacket, ConcoxServerPacket } = require('./concoxPacket');
 const { ConcoxTerminalLogin, ConcoxServerLogin } = require('./concoxLogin');
 const { ConcoxTerminalHeartbeat, ConcoxServerHeartbeat } = require('./concoxHeartbeat');
+const { ConcoxTerminalOnlineCommand, ConcoxServerOnlineCommand } = require('./concoxOnlineCommand');
 const { ConcoxTerminalInformationTransmission, ConcoxServerInformationTransmission, ConcoxModule } = require('./concoxInformationTransmission');
 
 
@@ -25,6 +26,17 @@ function testHeartbeat() {
 
   console.log(ConcoxTerminalPacket.parse(Concox.toBinary(terminal)));
   console.log(ConcoxServerPacket.parse(Concox.toBinary(server)));
+}
+
+function testOnlineCommand() {
+  const server = '78 78 11 80 0B 00 00 00 00 55 4E 4C 4F 43 4B 23 00 01 53 54 0D 0A';
+  const terminal = '79 79 00 0D 21 00 00 00 00 01 4F 4B 21 00 07 A6 30 0D 0A';
+
+//  Concox.compare(ConcoxServerOnlineCommand.build('UNLOCK#', 1), Concox.toBinary(server));
+//  Concox.compare(ConcoxTerminalOnlineCommand.build(192, 290, 4, 1, 8), Concox.toBinary(terminal));
+
+//  console.log(ConcoxServerPacket.parse(Concox.toBinary(server)));
+  console.log(ConcoxTerminalPacket.parse(Concox.toBinary(terminal)));
 }
 
 function testInformationTransmission() {
@@ -77,13 +89,13 @@ function buildExample() {
 function parseExample() {
   console.log(ConcoxTerminalPacket.parse(Concox.toBinary('78 78 11 01 03 55 95 10 91 34 74 89 36 08 06 42 00 01 15 FC 0D 0A')));
   console.log(ConcoxServerPacket.parse(Concox.toBinary('78 78 0C 01 13 0C 0D 02 39 0C 00 00 01 F6 EC 0D 0A')));
-  console.log(ConcoxServerPacket.parse(Concox.toBinary('79 79 00 06 98 00 00 00 C7 00 0D 0A')));
+/*  console.log(ConcoxServerPacket.parse(Concox.toBinary('79 79 00 06 98 00 00 00 C7 00 0D 0A')));
   
   console.log(ConcoxTerminalPacket.parse(Concox.toBinary('78 78 0B 23 01 01 92 04 00 01 00 03 4B 7F 0D 0A')));
   console.log(ConcoxServerPacket.parse(Concox.toBinary('78 78 05 23 00 03 4C 4D 0D 0A')));
   
   console.log(ConcoxTerminalPacket.parse(Concox.toBinary('78 78 0B 23 01 01 92 04 00 01 00 04 3F C0 0D 0A')));
-  console.log(ConcoxServerPacket.parse(Concox.toBinary('78 78 05 23 00 04 38 F2 0D 0A')));
+  console.log(ConcoxServerPacket.parse(Concox.toBinary('78 78 05 23 00 04 38 F2 0D 0A'))); */
 }
 
 /*
@@ -112,8 +124,9 @@ echo -n '78781101035595109134748936080642000115FC0D0A' | xxd -r -ps | nc 40.115.
 78 78 05 23 00 09 E3 17 0D 0A
 */
 
-testLogin();
+//testLogin();
 //testHeartbeat();
+testOnlineCommand();
 //testInformationTransmission();
 
 //buildExample();

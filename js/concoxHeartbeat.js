@@ -17,11 +17,16 @@ class ConcoxTerminalHeartbeat {
   }
 
   static parse(reader) {
+    const terminalInformationContent = reader.readByte();
+    const voltageLevel = reader.readWord();
+    const gsmSignalLength = reader.readByte();
+    const languageExtend= reader.readWord();
+
     const infoContent = {
-      terminalInformationContent: reader.readByte(),
-      voltageLevel: reader.readWord(),
-      gsmSignalLength: reader.readByte(),
-      languageExtend: reader.readWord()
+      terminalInformationContent,
+      voltageLevel,
+      gsmSignalLength,
+      languageExtend
     }
 
     const informationSerialNumber = reader.readWord();

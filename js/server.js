@@ -1,14 +1,13 @@
 const net = require('net');
+const ConcoxDevice = require('./device');
 const { ConcoxTerminalPacket } = require('./concoxPacket');
 const { ConcoxServerLogin } = require('./concoxLogin');
 const { ConcoxServerHeartbeat } = require('./concoxHeartbeat');
 const { ConcoxServerInformationTransmission } = require('./concoxInformationTransmission');
 
-const PORT = 1234;
-
-
-class ConcoxServer {
-  constructor(port = PORT) {
+class ConcoxServer extends ConcoxDevice {
+  constructor(port = ConcoxDevice.defaultPort) {
+    super();
     this.port = port;
     this.server = null;
   }
@@ -41,10 +40,11 @@ class ConcoxServer {
   response(connection, data) {
     const buffer = Buffer.from(data);
 
-    console.log('Server sent: ' + buffer.toString('hex'));
+    this.log('Server response', buffer);
 
-    connection.write(buffer);
-    connection.end();
+    connection.write(buffer, () => {
+      connection.end();
+    });
   }
 
   start() {
@@ -52,7 +52,7 @@ class ConcoxServer {
       console.log('Client connected from ' + connection.remoteAddress + ':' + connection.remotePort);
     
       connection.on('data', (data) => {
-        console.log('Client sent: ' + data.toString('hex'));
+        this.log('Client request', data);
 
         const object = ConcoxTerminalPacket.parse([...data]);
 

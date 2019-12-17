@@ -23,6 +23,11 @@ class ConcoxWriter {
     this.writeByte(value);
   }
 
+  writeString(str) {
+    for (let i = 0; i < str.length; i++)
+      this.writeByte(str.charCodeAt(i));
+  }
+
   writeBytes(value) {
     for (let b of value)
       this.writeByte(b);
