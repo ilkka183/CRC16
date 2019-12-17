@@ -2,32 +2,59 @@ const ConcoxReader = require('./concoxReader');
 const ConcoxWriter = require('./concoxWriter');
 
 
+class ConcoxModule {
+  constructor(number, content) {
+    this.number = number;
+    this.content = content;
+  }
+
+  get length() {
+    return this.content.length;
+  }
+
+  write(writer) {
+    writer.writeByte(this.number);
+    writer.writeWord(this.content.length);
+    writer.writeBytes(this.content);
+  }
+
+  read(reader) {
+    this.number = reader.readByte();
+    const length = reader.readWord();
+    this.content = reader.readBytes(length);
+  }
+}
+
 class ConcoxTerminalInformationTransmission {
-  static build(terminalInformationContent, voltageLevel, gsmSignalLength, languageExtend, informationSerialNumber) {
+  static build(modules, informationSerialNumber) {
     const writer = new ConcoxWriter(0x98);
 
-    writer.writeByte(terminalInformationContent);
-    writer.writeWord(voltageLevel);
-    writer.writeByte(gsmSignalLength);
-    writer.writeWord(languageExtend);
+    for (const number in modules) 
+      modules[number].write(writer, number);
+
     writer.writeWord(informationSerialNumber);
 
     return writer.encapsulate();
   }
 
   static parse(reader) {
-    const infoContent = {
-      terminalInformationContent: reader.readByte(),
-      voltageLevel: reader.readWord(),
-      gsmSignalLength: reader.readByte(),
-      languageExtend: reader.readWord()
+    const modules = [];
+    let length = 0;
+
+    while (length < reader.contentLength) {
+      const item = new ConcoxModule();
+      item.read(reader);
+
+      modules.push(item);
+
+      length += item.length + 3;
     }
 
     const informationSerialNumber = reader.readWord();
 
     return {
       protocolNumber: reader.protocolNumber,
-      infoContent,
+      modules,
       informationSerialNumber
     }
   }
@@ -59,4 +86,4 @@ class ConcoxServerInformationTransmission {
   }
 }
 
-module.exports = { ConcoxTerminalInformationTransmission, ConcoxServerInformationTransmission };
+module.exports = { ConcoxTerminalInformationTransmission, ConcoxServerInformationTransmission, ConcoxModule };

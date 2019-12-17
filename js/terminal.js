@@ -46,6 +46,11 @@ class ConcoxTerminal {
     this.informationSerialNumber++;
     this.send(ConcoxTerminalHeartbeat.build(1, 402, 4, 1, this.informationSerialNumber));
   }
+
+  informationTransmission() {
+    this.informationSerialNumber++;
+    this.send(ConcoxTerminalInformationTransmission.build(1, 402, 4, 1, this.informationSerialNumber));
+  }
 }
 
 const terminal = new ConcoxTerminal('0355951091347489', [0x36, 0x08]);
@@ -53,3 +58,4 @@ terminal.login(1);
 //terminal.heartbeat();
 //terminal.heartbeat();
 //terminal.heartbeat();
+terminal.informationTransmission();

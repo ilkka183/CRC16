@@ -35,23 +35,34 @@ class ConcoxTerminalLogin {
     return str;
   }
 
-  static timeZoneLanguage(timeZone) {
-    let result = Math.abs(timeZone)*100 << 4;
+  static packTimeZoneLanguage(timeZone, language) {
+    let result = Math.abs(timeZone) << 4;
 
     if (timeZone < 0)
       result |= 0b1000;
     
-    const language = 0b0010;
-
     return result | language;
+  }
+
+  static unpackTimeZoneLanguage(value) {
+    let timeZone = value >> 4;
+
+    if (value & 0b1000)
+      timeZone = -timeZone;
+
+    const language = value & 0b0011;
+    
+    return { timeZone, language }
   }
 
   static build(imei, modelIdentificationCode, timeZone, informationSerialNumber) {
     const writer = new ConcoxWriter(0x01);
 
+    const language = 0b10;
+
     writer.writeBytes(ConcoxTerminalLogin.imeiToBinary(imei));
     writer.writeBytes(modelIdentificationCode);
-    writer.writeWord(ConcoxTerminalLogin.timeZoneLanguage(timeZone));
+    writer.writeWord(ConcoxTerminalLogin.packTimeZoneLanguage(timeZone, language));
     writer.writeWord(informationSerialNumber);
 
     return writer.encapsulate(true);
@@ -60,7 +71,7 @@ class ConcoxTerminalLogin {
   static parse(reader) {
     const imei = ConcoxTerminalLogin.imeiToString(reader.readBytes(8));
     const modelIdentificationCode = reader.readBytes(2);
-    const timeZoneLanguage = reader.readWord();
+    const timeZoneLanguage = ConcoxTerminalLogin.unpackTimeZoneLanguage(reader.readWord());
 
     const infoContent = {
       imei,
