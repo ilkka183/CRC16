@@ -1,4 +1,5 @@
 const Concox = require('./concox');
+const ConcoxParser = require('./concoxParser');
 const { ConcoxTerminalPacket, ConcoxServerPacket } = require('./concoxPacket');
 const { ConcoxTerminalLogin, ConcoxServerLogin } = require('./concoxLogin');
 const { ConcoxTerminalHeartbeat, ConcoxServerHeartbeat } = require('./concoxHeartbeat');
@@ -6,26 +7,33 @@ const { ConcoxTerminalOnlineCommand, ConcoxServerOnlineCommand } = require('./co
 const { ConcoxTerminalInformationTransmission, ConcoxServerInformationTransmission, ConcoxModule } = require('./concoxInformationTransmission');
 
 
+function compare(data, packet, terminal) {
+  Concox.compare(packet.build(), Concox.toBinary(data));
+  console.log(ConcoxParser.parsePacket(Concox.toBinary(data), terminal));
+}
+
 function testLogin() {
-  const terminal = '78 78 11 01 08 68 12 01 48 37 35 71 36 05 32 02 00 39 DE F7 0D 0A';
-  const server = '78 78 0C 01 11 03 14 08 38 39 00 00 39 95 70 0D 0A';
+  compare(
+    '78 78 11 01 08 68 12 01 48 37 35 71 36 05 32 02 00 39 DE F7 0D 0A',
+    new ConcoxTerminalLogin('0868120148373571', [0x36, 0x05], 800, 57),
+    true);
 
-  Concox.compare(ConcoxTerminalLogin.build('0868120148373571', [0x36, 0x05], 800, 57), Concox.toBinary(terminal));
-  Concox.compare(ConcoxServerLogin.build({ year: 17, month: 3, day: 20, hour: 8, min: 56, second: 57 }, [], 57), Concox.toBinary(server));
-
-  console.log(ConcoxTerminalPacket.parse(Concox.toBinary(terminal)));
-  console.log(ConcoxServerPacket.parse(Concox.toBinary(server)));
+  compare(
+    '78 78 0C 01 11 03 14 08 38 39 00 00 39 95 70 0D 0A',
+    new ConcoxServerLogin({ year: 17, month: 3, day: 20, hour: 8, min: 56, second: 57 }, [], 57),
+    false);
 }
 
 function testHeartbeat() {
-  const terminal = '78 78 0B 23 C0 01 22 04 00 01 00 08 18 72 0D 0A';
-  const server = '78 78 05 23 01 00 67 0E 0D 0A';
+  compare(
+    '78 78 0B 23 C0 01 22 04 00 01 00 08 18 72 0D 0A',
+    new ConcoxTerminalHeartbeat(192, 290, 4, 1, 8),
+    true);
 
-  Concox.compare(ConcoxTerminalHeartbeat.build(192, 290, 4, 1, 8), Concox.toBinary(terminal));
-  Concox.compare(ConcoxServerHeartbeat.build(256), Concox.toBinary(server));
-
-  console.log(ConcoxTerminalPacket.parse(Concox.toBinary(terminal)));
-  console.log(ConcoxServerPacket.parse(Concox.toBinary(server)));
+  compare(
+    '78 78 05 23 01 00 67 0E 0D 0A',
+    new ConcoxServerHeartbeat(256),
+    false);
 }
 
 function testOnlineCommand() {
@@ -124,9 +132,9 @@ echo -n '78781101035595109134748936080642000115FC0D0A' | xxd -r -ps | nc 40.115.
 78 78 05 23 00 09 E3 17 0D 0A
 */
 
-//testLogin();
+testLogin();
 //testHeartbeat();
-testOnlineCommand();
+//testOnlineCommand();
 //testInformationTransmission();
 
 //buildExample();

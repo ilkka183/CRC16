@@ -1,13 +1,10 @@
-const ConcoxReader = require('./concoxReader');
-/*
-const { ConcoxTerminalLogin, ConcoxServerLogin } = require('./concoxLogin');
-const { ConcoxTerminalHeartbeat, ConcoxServerHeartbeat } = require('./concoxHeartbeat');
-const { ConcoxTerminalOnlineCommand, ConcoxServerOnlineCommand } = require('./concoxOnlineCommand');
-const { ConcoxTerminalInformationTransmission, ConcoxServerInformationTransmission } = require('./concoxInformationTransmission');
-*/
+const Concox = require('./concox');
+const ConcoxWriter = require('./concoxWriter');
+
 
 class ConcoxPacket {
-  constructor() {
+  constructor(informationSerialNumber) {
+    this.informationSerialNumber = informationSerialNumber;
   }
 
   getTitle() {
@@ -22,59 +19,52 @@ class ConcoxPacket {
     return false;
   }
 
+  write(writer) {
+    this.writeContent(writer);
+    writer.writeWord(this.informationSerialNumber);
+  }
+
+  read(reader) {
+    this.readContent(reader);
+    this.informationSerialNumber = reader.readWord();
+  }
+
   build() {
-    const writer = new ConcoxWriter(this.getProtocolNumber());
+    const writer = new ConcoxWriter();
+    const protocolNumber = this.getProtocolNumber();
+
+    if (protocolNumber === 0x98)
+      writer.writeWord(0x0000); // two byte length
+    else
+    writer.writeByte(0x00); // one byte length
+      
+    writer.writeByte(protocolNumber);
+
     this.write(writer);
-    return writer.encapsulate(this.getEncryptedCrc());
-  }
-}
 
+    if (protocolNumber === 0x98) {
+      const length = writer.data.length;
 
-class ConcoxTerminalPacket extends ConcoxPacket {
-  constructor() {
-    super();
-  }
-
-  static parse(data) {
-    const reader = new ConcoxReader(data, true);
-    let packet = null;
- 
-/*    
-    switch (reader.protocolNumber) {
-      case 0x01: packet = ConcoxTerminalLogin(); break;
-      case 0x21: packet = ConcoxTerminalOnlineCommand(); break;
-      case 0x23: packet = ConcoxTerminalHeartbeat(); break;
-      case 0x98: packet = ConcoxTerminalInformationTransmission(); VideoTrack;
+      writer.data[0] = (length >> 8) & 0xFF;
+      writer.data[1] = length & 0xFF;
     }
-*/
-
-    if (packet)
-      return packet.parse(reader);
-
-    return undefined;
-  }
-}
-
-
-class ConcoxServerPacket extends ConcoxPacket {
-  static parse(data) {
-    const reader = new ConcoxReader(data);
-    let packet = null;
-
-/*    
-    switch (reader.protocolNumber) {
-      case 0x01: packet = ConcoxServerLogin(); break;
-      case 0x23: packet = ConcoxServerHeartbeat(); break;
-      case 0x80: packet = ConcoxServerOnlineCommand(); break;
-      case 0x98: packet = ConcoxServerInformationTransmission(); break;
+    else {
+      writer.data[0] = writer.data.length + 1;
     }
-*/
+      
+    writer.writeWord(Concox.crc(writer.data, this.getEncryptedCrc()));
 
-    if (packet)
-      return packet.parse(reader);
+    const startBit = (protocolNumber === 0x98) ? 0x79 : 0x78;
 
-    return undefined;
+    writer.data.unshift(startBit); // start bytes
+    writer.data.unshift(startBit);
+
+    writer.data.push(0x0D); // stop bytes
+    writer.data.push(0x0A);
+
+    return writer.data;
   }
 }
 
-module.exports = { ConcoxTerminalPacket, ConcoxServerPacket };
+
+module.exports = ConcoxPacket;

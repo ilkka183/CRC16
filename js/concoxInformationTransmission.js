@@ -1,5 +1,11 @@
-const ConcoxReader = require('./concoxReader');
-const ConcoxWriter = require('./concoxWriter');
+const ConcoxPacket = require('./concoxPacket');
+
+
+class ConcoxInformationTransmissionPacket extends ConcoxPacket {
+  getProtocolNumber() {
+    return 0x98;
+  }
+}
 
 
 class ConcoxModule {
@@ -25,19 +31,17 @@ class ConcoxModule {
   }
 }
 
-class ConcoxTerminalInformationTransmission {
-  static build(modules, informationSerialNumber) {
-    const writer = new ConcoxWriter(0x98);
-
-    for (const number in modules) 
-      modules[number].write(writer, number);
-
-    writer.writeWord(informationSerialNumber);
-
-    return writer.encapsulate();
+class ConcoxTerminalInformationTransmission extends ConcoxInformationTransmissionPacket {
+  constructor(modules, informationSerialNumber) {
+    super(informationSerialNumber);
   }
 
-  static parse(reader) {
+  writeContent(writer) {
+    for (const number in modules) 
+      modules[number].write(writer, number);
+  }
+
+  readContent(reader) {
     const modules = [];
     let length = 0;
 
@@ -49,40 +53,23 @@ class ConcoxTerminalInformationTransmission {
 
       length += item.length + 3;
     }
-
-    const informationSerialNumber = reader.readWord();
-
-    return {
-      protocolNumber: reader.protocolNumber,
-      modules,
-      informationSerialNumber
-    }
   }
 }
 
 
-class ConcoxServerInformationTransmission {
-  static build(reservedExtensionBit, informationSerialNumber) {
-    const writer = new ConcoxWriter(0x98);
-
-    writer.writeByte(reservedExtensionBit.length);
-    writer.writeBytes(reservedExtensionBit);
-    writer.writeWord(informationSerialNumber);
-
-    return writer.encapsulate();
+class ConcoxServerInformationTransmission extends ConcoxInformationTransmissionPacket {
+  constructor(reservedExtensionBit, informationSerialNumber) {
+    super(informationSerialNumber);
   }
 
-  static parse(reader) {
-    const reservedExtensionBitLength = reader.readByte();
-    const reservedExtensionBit = reader.readBytes(reservedExtensionBitLength);
-    const informationSerialNumber = reader.readWord();
+  writeContent(writer) {
+    writer.writeByte(this.reservedExtensionBit.length);
+    writer.writeBytes(this.reservedExtensionBit);
+  }
 
-    return {
-      protocolNumber: reader.protocolNumber,
-      reservedExtensionBitLength,
-      reservedExtensionBit,
-      informationSerialNumber
-    }
+  readContent(reader) {
+    this.reservedExtensionBitLength = reader.readByte();
+    this.reservedExtensionBit = reader.readBytes(this.reservedExtensionBitLength);
   }
 }
 

@@ -1,61 +1,57 @@
-const ConcoxReader = require('./concoxReader');
-const ConcoxWriter = require('./concoxWriter');
+const ConcoxPacket = require('./concoxPacket');
 
 
-class ConcoxTerminalHeartbeat {
-  static build(terminalInformationContent, voltageLevel, gsmSignalLength, languageExtend, informationSerialNumber) {
-    const writer = new ConcoxWriter(0x23);
-
-    writer.writeByte(terminalInformationContent);
-    writer.writeWord(voltageLevel);
-    writer.writeByte(gsmSignalLength);
-    writer.writeWord(languageExtend);
-
-    writer.writeWord(informationSerialNumber);
-
-    return writer.encapsulate();
+class ConcoxHeartbeatPacket extends ConcoxPacket {
+  getProtocolNumber() {
+    return 0x23;
   }
+}
 
-  static parse(reader) {
-    const terminalInformationContent = reader.readByte();
-    const voltageLevel = reader.readWord();
-    const gsmSignalLength = reader.readByte();
-    const languageExtend= reader.readWord();
 
-    const infoContent = {
+class ConcoxTerminalHeartbeat extends ConcoxHeartbeatPacket {
+  constructor(terminalInformationContent, voltageLevel, gsmSignalLength, languageExtend, informationSerialNumber) {
+    super(informationSerialNumber);
+
+    this.infoContent = {
       terminalInformationContent,
       voltageLevel,
       gsmSignalLength,
       languageExtend
     }
+  }
 
-    const informationSerialNumber = reader.readWord();
+  writeContent(writer) {
+    writer.writeByte(this.infoContent.terminalInformationContent);
+    writer.writeWord(this.infoContent.voltageLevel);
+    writer.writeByte(this.infoContent.gsmSignalLength);
+    writer.writeWord(this.infoContent.languageExtend);
+  }
 
-    return {
-      protocolNumber: reader.protocolNumber,
-      infoContent,
-      informationSerialNumber
+  readContent(reader) {
+    const terminalInformationContent = reader.readByte();
+    const voltageLevel = reader.readWord();
+    const gsmSignalLength = reader.readByte();
+    const languageExtend= reader.readWord();
+
+    this.infoContent = {
+      terminalInformationContent,
+      voltageLevel,
+      gsmSignalLength,
+      languageExtend
     }
   }
 }
 
 
-class ConcoxServerHeartbeat {
-  static build(informationSerialNumber) {
-    const writer = new ConcoxWriter(0x23);
-
-    writer.writeWord(informationSerialNumber);
-
-    return writer.encapsulate();
+class ConcoxServerHeartbeat extends ConcoxHeartbeatPacket {
+  constructor(informationSerialNumber) {
+    super(informationSerialNumber);
   }
 
-  static parse(reader) {
-    const informationSerialNumber = reader.readWord();
+  writeContent(writer) {
+  }
 
-    return {
-      protocolNumber: reader.protocolNumber,
-      informationSerialNumber
-    }
+  readContent(reader) {
   }
 }
 

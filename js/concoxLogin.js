@@ -1,41 +1,38 @@
-const { ConcoxTerminalPacket, ConcoxServerPacket } = require('./concoxPacket');
+const ConcoxPacket = require('./concoxPacket');
 
 
-class ConcoxTerminalLogin extends ConcoxTerminalPacket {
+class ConcoxLoginPacket extends ConcoxPacket {
+  getProtocolNumber() {
+    return 0x01;
+  }
+}
+
+
+class ConcoxTerminalLogin extends ConcoxLoginPacket {
   constructor(imei, modelIdentificationCode, timeZone, informationSerialNumber) {
-    super();
+    super(informationSerialNumber);
 
     this.infoContent = {
       imei,
       modelIdentificationCode,
       timeZone
     }
-
-    this.informationSerialNumber = informationSerialNumber;
-  }
-
-  getProtocolNumber() {
-    return 0x01;
   }
 
   getEncryptedCrc() {
     return true;
   }
 
-  write(writer) {
-    writer.writeBytes(ConcoxTerminalLogin.imeiToBinary(this.imei));
-    writer.writeBytes(this.modelIdentificationCode);
-    writer.writeWord(ConcoxTerminalLogin.packTimeZoneLanguage(this.timeZone, 0b10));
-
-    writer.writeWord(this.informationSerialNumber);
+  writeContent(writer) {
+    writer.writeBytes(ConcoxTerminalLogin.imeiToBinary(this.infoContent.imei));
+    writer.writeBytes(this.infoContent.modelIdentificationCode);
+    writer.writeWord(ConcoxTerminalLogin.packTimeZoneLanguage(this.infoContent.timeZone, 0b10));
   }
 
-  read(reader) {
+  readContent(reader) {
     this.infoContent.imei = ConcoxTerminalLogin.imeiToString(reader.readBytes(8));
     this.infoContent.modelIdentificationCode = reader.readBytes(2);
     this.infoContent.timeZoneLanguage = ConcoxTerminalLogin.unpackTimeZoneLanguage(reader.readWord());
-
-    this.informationSerialNumber = reader.readWord();
   }
 
   static imeiToBinary(imei) {
@@ -92,20 +89,15 @@ class ConcoxTerminalLogin extends ConcoxTerminalPacket {
 }
 
 
-class ConcoxServerLogin extends ConcoxServerPacket {
+class ConcoxServerLogin extends ConcoxLoginPacket {
   constructor(dateTime, reservedExtensionBit, informationSerialNumber) {
-    super();
+    super(informationSerialNumber);
 
     this.dateTime = dateTime;
     this.reservedExtensionBit = reservedExtensionBit;
-    this.informationSerialNumber = informationSerialNumber;
   }
 
-  getProtocolNumber() {
-    return 0x01;
-  }
-
-  write(writer) {
+  writeContent(writer) {
     writer.writeByte(this.dateTime.year);
     writer.writeByte(this.dateTime.month);
     writer.writeByte(this.dateTime.day);
@@ -115,22 +107,20 @@ class ConcoxServerLogin extends ConcoxServerPacket {
 
     writer.writeByte(this.reservedExtensionBit.length);
     writer.writeBytes(this.reservedExtensionBit);
-
-    writer.writeWord(this.informationSerialNumber);
   }
 
-  read(reader) {
-    this.dateTime.year = reader.readByte();
-    this.dateTime.month = reader.readByte();
-    this.dateTime.day = reader.readByte();
-    this.dateTime.hour = reader.readByte();
-    this.dateTime.min = reader.readByte();
-    this.dateTime.second = reader.readByte();
+  readContent(reader) {
+    const year = reader.readByte();
+    const month = reader.readByte();
+    const day = reader.readByte();
+    const hour = reader.readByte();
+    const min = reader.readByte();
+    const second = reader.readByte();
+
+    this.dateTime = { year, month, day, hour, min, second}
 
     this.reservedExtensionBitLength = reader.readByte();
     this.reservedExtensionBit = reader.readBytes(this.reservedExtensionBitLength);
-
-    this.informationSerialNumber = reader.readWord();
   }
 }
 
