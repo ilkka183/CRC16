@@ -14,7 +14,7 @@ class TerminalLogin extends LoginPacket {
   }
 
   getTitle() {
-    return 'Login packet';
+    return 'Login packet (terminal request)';
   }
 
   getEncryptedCrc() {
@@ -106,7 +106,7 @@ class TerminalLogin extends LoginPacket {
 
 class ServerLogin extends LoginPacket {
   getTitle() {
-    return 'Login packet server response';
+    return 'Login packet (server response)';
   }
 
   assign(dateTime, reservedExtensionBit) {

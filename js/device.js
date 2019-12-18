@@ -1,24 +1,35 @@
+const { Device, Concox } = require('./concox');
+
+
 class ConcoxDevice {
   static get defaultPort() {
     return 1234;
   }
 
-  bufferToHex(data) {
-    const str = data.toString('hex').toUpperCase();
-    let hex = '';
-
-    for (let i = 0; i < str.length; i++) {
-      if ((i > 0) && (i % 2 == 0))
-        hex += ' ';
-
-      hex += str[i];
-    }
-
-    return hex;
+  constructor(detailLog = false) {
+    this.detailLog = detailLog;
   }
 
-  log(text, data) {
-    console.log(text + ':', this.bufferToHex(data));
+  logData(text, data) {
+    console.log(text, Concox.toHex(data));
+  }
+
+  logPacket(packet, data) {
+    if (this.detailLog)
+      packet.log(data);
+    else
+      this.logData(packet.getTitle() + ':', data);
+  }
+
+  logAction(text) {
+    if (this.detailLog)
+      console.log('');
+
+    console.log(text);
+  }
+
+  logError(text, error) {
+    console.log(text, error);
   }
 }
 

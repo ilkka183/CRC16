@@ -1,8 +1,10 @@
 const net = require('net');
+const PacketParser = require('./packetParser');
 const ConcoxDevice = require('./device');
-const { ConcoxTerminalLogin } = require('./concoxLogin');
-const { ConcoxTerminalHeartbeat } = require('./concoxHeartbeat');
-const { ConcoxTerminalInformationTransmission } = require('./concoxInformationTransmission');
+const { Device, Concox } = require('./concox');
+const { TerminalLogin } = require('./loginPacket');
+const { TerminalHeartbeat } = require('./heartbeatPacket');
+const { TerminalInformationTransmission } = require('./informationTransmissionPacket');
 
 const HOST = 'localhost';
 
@@ -10,54 +12,72 @@ const HOST = 'localhost';
 class ConcoxTerminal extends ConcoxDevice {
   constructor(imei, modelIdentificationCode, host = HOST, port = ConcoxDevice.defaultPort) {
     super();
+
     this.imei = imei,
     this.modelIdentificationCode = modelIdentificationCode;
     this.host = host;
     this.port = port;
-    this.client = null;
-    this.informationSerialNumber = 0;
+    this.connection = null;
+    this.serialNumber = 0;
   }
 
-  send(data) {
-    this.client = net.createConnection(this.port, this.host, () => {
-      console.log('Connection local address: ' + this.client.localAddress + ':' + this.client.localPort);
-      console.log('Connection remote address: ' + this.client.remoteAddress + ':' + this.client.remotePort);
+  send(packet) {
+    const data = packet.build();
+    const buffer = Buffer.from(data);
+
+    this.connection = net.createConnection(this.port, this.host, () => {
+      console.log('Connection local address: ' + this.connection.localAddress + ':' + this.connection.localPort);
+      console.log('Connection remote address: ' + this.connection.remoteAddress + ':' + this.connection.remotePort);
     
-      this.log('Client request', data);
-      this.client.write(data);
+      this.logPacket(packet, data);
+      this.connection.write(buffer);
     });
  
-    this.client.on('data', (data) => {
-      this.log('Server response', data);
-      this.client.end();
+    this.connection.on('data', (buffer) => {
+      const data = [...buffer];
+      const packet = PacketParser.parse(data, Device.SERVER);
+
+      this.logPacket(packet, data);
+      this.connection.end();
     });
      
-    this.client.on('close', () => {
-      console.log('Client disconnected');
+    this.connection.on('close', () => {
+      this.logAction('Client disconnected');
     });
      
-    this.client.on('error', (err) => {
+    this.connection.on('error', (err) => {
       console.error(err);
     });
   }
 
-  sendPacket(data) {
-    this.send(Buffer.from(data));
-  }  
+  login(timeZone, serialNumber) {
+    this.serialNumber = serialNumber;
 
-  login(timeZone, informationSerialNumber) {
-    this.informationSerialNumber = informationSerialNumber;
-    this.sendPacket(ConcoxTerminalLogin.build(this.imei, this.modelIdentificationCode, timeZone, this.informationSerialNumber));
+    const packet = new TerminalLogin();
+    packet.assign(this.imei, this.modelIdentificationCode, timeZone);
+    packet.serialNumber = this.serialNumber;
+
+    this.send(packet);
   }
 
   heartbeat() {
-    this.informationSerialNumber++;
-    this.sendPacket(ConcoxTerminalHeartbeat.build(1, 402, 4, 1, this.informationSerialNumber));
+    this.serialNumber++;
+
+    const packet = new TerminalHeartbeat();
+    packet.assign(1, 402, 4, 1);
+    packet.serialNumber = this.serialNumber;
+
+    this.send(packet);
   }
 
   informationTransmission() {
-    this.informationSerialNumber++;
-    this.sendPacket(ConcoxTerminalInformationTransmission.build(1, 402, 4, 1, this.informationSerialNumber));
+    this.serialNumber++;
+
+    const packet = new TerminalInformationTransmission();
+    packet.assign(1, 402, 4, 1);
+    packet.serialNumber = this.serialNumber;
+
+    this.send(packet);
   }
 }
 

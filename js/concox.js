@@ -7,6 +7,12 @@ crc16_x25.createTable();
 const encryptKey = [0x78, 0x69, 0x6e, 0x73, 0x69, 0x77, 0x65, 0x69, 0x26, 0x63, 0x6f, 0x6e, 0x63, 0x6f, 0x78];
 
 
+const Device = {
+  SERVER: 0,
+  TERMINAL: 1
+}
+
+
 class Concox {
   static crc(data, encrypted = false) {
     if (encrypted)
@@ -66,4 +72,4 @@ class Concox {
   }
 }
 
-module.exports = Concox;
+module.exports = { Concox, Device };

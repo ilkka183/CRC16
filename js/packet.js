@@ -1,4 +1,4 @@
-const Concox = require('./concox');
+const { Concox } = require('./concox');
 const PacketWriter = require('./packetWriter');
 
 
@@ -62,6 +62,32 @@ class ConcoxPacket {
     writer.writeByte(0x0A);
 
     return writer.data;
+  }
+
+  logTitle() {
+    console.log('');
+  
+    let title = this.getTitle();
+  
+    if (title) {
+      console.log(title);
+      
+      let line = '';
+      
+      for (let i = 0; i < title.length; i++)
+        line += '-';
+      
+      console.log(line);
+    }
+  }
+
+  log(data) {
+    this.logTitle();
+
+    if (data)
+      console.log(Concox.toHex(data));
+      
+    console.log(this);
   }
 }
 

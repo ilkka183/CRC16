@@ -10,7 +10,7 @@ class HeartbeatPacket extends Packet {
 
 class TerminalHeartbeat extends HeartbeatPacket {
   getTitle() {
-    return 'Heartbeat';
+    return 'Heartbeat (terminal request)';
   }
 
   assign(terminalInformationContent, voltageLevel, gsmSignalLength, languageExtend) {
@@ -47,7 +47,7 @@ class TerminalHeartbeat extends HeartbeatPacket {
 
 class ServerHeartbeat extends HeartbeatPacket {
   getTitle() {
-    return 'Heartbeat server response';
+    return 'Heartbeat (server response)';
   }
 
   assign() {

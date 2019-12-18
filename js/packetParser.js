@@ -1,13 +1,14 @@
-const Concox = require('./concox');
+const { Concox, Device } = require('./concox');
 const PacketReader = require('./packetReader');
 const { TerminalLogin, ServerLogin } = require('./loginPacket');
 const { TerminalHeartbeat, ServerHeartbeat } = require('./heartbeatPacket');
+const { TerminalLocation, ServerLocation } = require('./locationPacket');
 const { TerminalOnlineCommand, ServerOnlineCommand } = require('./onlineCommandPacket');
 const { TerminalInformationTransmission, ServerInformationTransmission } = require('./informationTransmissionPacket');
 
 
 class PacketParser {
-  static parse(data, terminal) {
+  static parse(data, device) {
     const reader = new PacketReader(data);
 
     // Start bytes
@@ -37,7 +38,7 @@ class PacketParser {
     const protocolNumber = reader.readByte();
 
     // Error check
-    const encryptedCrc = terminal && (protocolNumber === 0x01)
+    const encryptedCrc = (device == Device.TERMINAL) && (protocolNumber === 0x01)
     const errorCheck = reader.peekWordAt(reader.data.length - 4);
     const crc = Concox.crcRange(reader.data, 2, reader.data.length - 4, encryptedCrc);
 
@@ -46,20 +47,30 @@ class PacketParser {
 
     let packet = undefined;
 
-    if (terminal) {
-      switch (protocolNumber) {
-        case 0x01: packet = new TerminalLogin(); break;
-        case 0x21: packet = new TerminalOnlineCommand(); break;
-        case 0x23: packet = new TerminalHeartbeat(); break;
-        case 0x98: packet = new TerminalInformationTransmission(); break;
-      }
-    } else {
-      switch (protocolNumber) {
-        case 0x01: packet = new ServerLogin(); break;
-        case 0x23: packet = new ServerHeartbeat(); break;
-        case 0x80: packet = new ServerOnlineCommand(); break;
-        case 0x98: packet = new ServerInformationTransmission(); break;
-      }
+    switch (device) {
+      case Device.TERMINAL:
+        switch (protocolNumber) {
+          case 0x01: packet = new TerminalLogin(); break;
+          case 0x21: packet = new TerminalOnlineCommand(); break;
+          case 0x23: packet = new TerminalHeartbeat(); break;
+          case 0x32: packet = new TerminalLocation(); break;
+          case 0x33: packet = new TerminalLocation(); break;
+          case 0x98: packet = new TerminalInformationTransmission(); break;
+        }
+
+        break;
+
+      case Device.SERVER:
+        switch (protocolNumber) {
+          case 0x01: packet = new ServerLogin(); break;
+          case 0x23: packet = new ServerHeartbeat(); break;
+          case 0x32: packet = new ServerLocation(); break;
+          case 0x33: packet = new ServerLocation(); break;
+          case 0x80: packet = new ServerOnlineCommand(); break;
+          case 0x98: packet = new ServerInformationTransmission(); break;
+        }
+
+        break;
     }
 
     if (packet) {
