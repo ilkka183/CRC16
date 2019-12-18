@@ -1,17 +1,19 @@
-const ConcoxPacket = require('./concoxPacket');
+const Packet = require('./packet');
 
 
-class ConcoxHeartbeatPacket extends ConcoxPacket {
+class HeartbeatPacket extends Packet {
   getProtocolNumber() {
     return 0x23;
   }
 }
 
 
-class ConcoxTerminalHeartbeat extends ConcoxHeartbeatPacket {
-  constructor(terminalInformationContent, voltageLevel, gsmSignalLength, languageExtend, informationSerialNumber) {
-    super(informationSerialNumber);
+class TerminalHeartbeat extends HeartbeatPacket {
+  getTitle() {
+    return 'Heartbeat';
+  }
 
+  assign(terminalInformationContent, voltageLevel, gsmSignalLength, languageExtend) {
     this.infoContent = {
       terminalInformationContent,
       voltageLevel,
@@ -31,7 +33,7 @@ class ConcoxTerminalHeartbeat extends ConcoxHeartbeatPacket {
     const terminalInformationContent = reader.readByte();
     const voltageLevel = reader.readWord();
     const gsmSignalLength = reader.readByte();
-    const languageExtend= reader.readWord();
+    const languageExtend = reader.readWord();
 
     this.infoContent = {
       terminalInformationContent,
@@ -43,9 +45,12 @@ class ConcoxTerminalHeartbeat extends ConcoxHeartbeatPacket {
 }
 
 
-class ConcoxServerHeartbeat extends ConcoxHeartbeatPacket {
-  constructor(informationSerialNumber) {
-    super(informationSerialNumber);
+class ServerHeartbeat extends HeartbeatPacket {
+  getTitle() {
+    return 'Heartbeat server response';
+  }
+
+  assign() {
   }
 
   writeContent(writer) {
@@ -55,4 +60,4 @@ class ConcoxServerHeartbeat extends ConcoxHeartbeatPacket {
   }
 }
 
-module.exports = { ConcoxTerminalHeartbeat, ConcoxServerHeartbeat };
+module.exports = { TerminalHeartbeat, ServerHeartbeat };

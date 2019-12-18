@@ -9,10 +9,6 @@ class ConcoxReader {
     this.packetLength = undefined;
   }
 
-  get contentLength() {
-    return this.packetLength ? this.packetLength - 5 : 0;
-  }
-
   peekByte() {
     return this.data[this.index];
   }

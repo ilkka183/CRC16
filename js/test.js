@@ -1,67 +1,97 @@
 const Concox = require('./concox');
-const ConcoxParser = require('./concoxParser');
-const { ConcoxTerminalPacket, ConcoxServerPacket } = require('./concoxPacket');
-const { ConcoxTerminalLogin, ConcoxServerLogin } = require('./concoxLogin');
-const { ConcoxTerminalHeartbeat, ConcoxServerHeartbeat } = require('./concoxHeartbeat');
-const { ConcoxTerminalOnlineCommand, ConcoxServerOnlineCommand } = require('./concoxOnlineCommand');
-const { ConcoxTerminalInformationTransmission, ConcoxServerInformationTransmission, ConcoxModule } = require('./concoxInformationTransmission');
+const PacketParser = require('./packetParser');
+const { TerminalLogin, ServerLogin } = require('./loginPacket');
+const { TerminalHeartbeat, ServerHeartbeat } = require('./heartbeatPacket');
+const { TerminalOnlineCommand, ServerOnlineCommand } = require('./onlineCommandPacket');
+const { TerminalInformationTransmission, ServerInformationTransmission, PacketModule } = require('./informationTransmissionPacket');
 
 
-function compare(data, packet, terminal) {
-  Concox.compare(packet.build(), Concox.toBinary(data));
-  console.log(ConcoxParser.parsePacket(Concox.toBinary(data), terminal));
+function compare(hex, packet, terminal) {
+  const data1 = Concox.toBinary(hex);
+  const data2 = packet.build();
+
+  console.log('');
+
+  let title = packet.getTitle();
+
+  if (title) {
+    title = title.toUpperCase();
+    console.log(title);
+    
+    let line = '';
+    
+    for (let i = 0; i < title.length; i++)
+      line += '-';
+    
+    console.log(line);
+  }
+
+  if (!Concox.equals(data1, data2)) {
+    console.log('<<< ERROR >>>');
+    console.log(Concox.toHex(data1));
+    console.log(Concox.toHex(data2));
+    console.log('=== ERROR ===');
+    console.log(data1);
+    console.log(data2);
+    console.log('<<< ERROR >>>');
+  }
+  else
+    console.log(Concox.toHex(data1));
+
+  console.log(PacketParser.parse(data1, terminal));
 }
 
 function testLogin() {
-  compare(
-    '78 78 11 01 08 68 12 01 48 37 35 71 36 05 32 02 00 39 DE F7 0D 0A',
-    new ConcoxTerminalLogin('0868120148373571', [0x36, 0x05], 800, 57),
-    true);
+  let packet = new TerminalLogin();
+  packet.assign('0868120148373571', [0x36, 0x05], 800);
+  packet.serialNumber = 57;
+  compare('78 78 11 01 08 68 12 01 48 37 35 71 36 05 32 02 00 39 DE F7 0D 0A', packet, true);
 
-  compare(
-    '78 78 0C 01 11 03 14 08 38 39 00 00 39 95 70 0D 0A',
-    new ConcoxServerLogin({ year: 17, month: 3, day: 20, hour: 8, min: 56, second: 57 }, [], 57),
-    false);
+  packet = new ServerLogin();
+  packet.assign({ year: 17, month: 3, day: 20, hour: 8, min: 56, second: 57 }, []);
+  packet.serialNumber = 57;
+  compare('78 78 0C 01 11 03 14 08 38 39 00 00 39 95 70 0D 0A', packet, false);
 }
 
 function testHeartbeat() {
-  compare(
-    '78 78 0B 23 C0 01 22 04 00 01 00 08 18 72 0D 0A',
-    new ConcoxTerminalHeartbeat(192, 290, 4, 1, 8),
-    true);
+  let packet = new TerminalHeartbeat();
+  packet.assign(192, 290, 4, 1);
+  packet.serialNumber = 8;
+  compare('78 78 0B 23 C0 01 22 04 00 01 00 08 18 72 0D 0A', packet, true);
 
-  compare(
-    '78 78 05 23 01 00 67 0E 0D 0A',
-    new ConcoxServerHeartbeat(256),
-    false);
+  packet = new ServerHeartbeat();
+  packet.serialNumber = 256;
+  compare('78 78 05 23 01 00 67 0E 0D 0A', packet, false);
 }
 
 function testOnlineCommand() {
-  const server = '78 78 11 80 0B 00 00 00 00 55 4E 4C 4F 43 4B 23 00 01 53 54 0D 0A';
-  const terminal = '79 79 00 0D 21 00 00 00 00 01 4F 4B 21 00 07 A6 30 0D 0A';
+  let packet = new ServerOnlineCommand();
+  packet.assign('UNLOCK#');
+  packet.serialNumber = 1;
+  compare('78 78 11 80 0B 00 00 00 00 55 4E 4C 4F 43 4B 23 00 01 53 54 0D 0A', packet, false);
 
-//  Concox.compare(ConcoxServerOnlineCommand.build('UNLOCK#', 1), Concox.toBinary(server));
-//  Concox.compare(ConcoxTerminalOnlineCommand.build(192, 290, 4, 1, 8), Concox.toBinary(terminal));
-
-  console.log(ConcoxServerPacket.parse(Concox.toBinary(server)));
-  console.log(ConcoxTerminalPacket.parse(Concox.toBinary(terminal)));
+  packet = new TerminalOnlineCommand();
+  packet.assign([0, 0, 0, 0], 1, 'OK!');
+  packet.serialNumber = 7;
+  compare('79 79 00 0D 21 00 00 00 00 01 4F 4B 21 00 07 A6 30 0D 0A', packet, true);
 }
 
 function testInformationTransmission() {
-  const terminal = '79 79 00 28 98 00 00 08 08 68 12 01 48 37 35 71 01 00 08 04 60 04 03 40 00 99 32 02 00 0A 89 86 02 B3 13 15 90 10 99 32 00 04 F5 81 0D 0A';
-  const server = '79 79 00 06 98 00 00 00 C7 00 0D 0A';
-
   const modules = [
-    new ConcoxModule(0, Concox.toBinary('08 68 12 01 48 37 35 71')),
-    new ConcoxModule(1, Concox.toBinary('04 60 04 03 40 00 99 32')),
-    new ConcoxModule(2, Concox.toBinary('89 86 02 B3 13 15 90 10 99 32'))
+    new PacketModule(0, Concox.toBinary('08 68 12 01 48 37 35 71')),
+    new PacketModule(1, Concox.toBinary('04 60 04 03 40 00 99 32')),
+    new PacketModule(2, Concox.toBinary('89 86 02 B3 13 15 90 10 99 32'))
   ];
 
-  Concox.compare(ConcoxTerminalInformationTransmission.build(modules, 4), Concox.toBinary(terminal));
-  Concox.compare(ConcoxServerInformationTransmission.build([], 0), Concox.toBinary(server));
+  let packet = new TerminalInformationTransmission();
+  packet.assign(modules);
+  packet.serialNumber = 4;
+  compare('79 79 00 28 98 00 00 08 08 68 12 01 48 37 35 71 01 00 08 04 60 04 03 40 00 99 32 02 00 0A 89 86 02 B3 13 15 90 10 99 32 00 04 F5 81 0D 0A', packet, true);
 
-  console.log(ConcoxTerminalPacket.parse(Concox.toBinary(terminal)));
-  console.log(ConcoxServerPacket.parse(Concox.toBinary(server)));
+  packet = new ServerInformationTransmission();
+  packet.assign([]);
+  packet.serialNumber = 0;
+  compare('79 79 00 06 98 00 00 00 C7 00 0D 0A', packet, false);
 }
 
 function buildExample() {
@@ -132,9 +162,9 @@ echo -n '78781101035595109134748936080642000115FC0D0A' | xxd -r -ps | nc 40.115.
 78 78 05 23 00 09 E3 17 0D 0A
 */
 
-testLogin();
+//testLogin();
 //testHeartbeat();
-//testOnlineCommand();
+testOnlineCommand();
 //testInformationTransmission();
 
 //buildExample();

@@ -31,20 +31,6 @@ class Concox {
     return true;
   }
 
-  static compare(data1, data2) {
-    if (!Concox.equals(data1, data2)) {
-      console.log('<<< ERROR >>>');
-      console.log(Concox.toHex(data1));
-      console.log(Concox.toHex(data2));
-      console.log('=== ERROR ===');
-      console.log(data1);
-      console.log(data2);
-      console.log('<<< ERROR >>>');
-   }
-    else
-      console.log(Concox.toHex(data1));
-  }
-
   static toHex(data) {
     let hex = '';
 

@@ -1,14 +1,14 @@
-const ConcoxPacket = require('./concoxPacket');
+const Packet = require('./packet');
 
 
-class ConcoxInformationTransmissionPacket extends ConcoxPacket {
+class InformationTransmissionPacket extends Packet {
   getProtocolNumber() {
     return 0x98;
   }
 }
 
 
-class ConcoxModule {
+class PacketModule {
   constructor(number, content) {
     this.number = number;
     this.content = content;
@@ -31,25 +31,29 @@ class ConcoxModule {
   }
 }
 
-class ConcoxTerminalInformationTransmission extends ConcoxInformationTransmissionPacket {
-  constructor(modules, informationSerialNumber) {
-    super(informationSerialNumber);
+class TerminalInformationTransmission extends InformationTransmissionPacket {
+  getTitle() {
+    return 'Information transmission';
+  }
+
+  assign(modules) {
+    this.modules = modules;
   }
 
   writeContent(writer) {
-    for (const number in modules) 
-      modules[number].write(writer, number);
+    for (const number in this.modules) 
+      this.modules[number].write(writer, number);
   }
 
   readContent(reader) {
-    const modules = [];
+    this.modules = [];
     let length = 0;
 
-    while (length < reader.contentLength) {
-      const item = new ConcoxModule();
+    while (length < this.contentLength) {
+      const item = new PacketModule();
       item.read(reader);
 
-      modules.push(item);
+      this.modules.push(item);
 
       length += item.length + 3;
     }
@@ -57,9 +61,14 @@ class ConcoxTerminalInformationTransmission extends ConcoxInformationTransmissio
 }
 
 
-class ConcoxServerInformationTransmission extends ConcoxInformationTransmissionPacket {
-  constructor(reservedExtensionBit, informationSerialNumber) {
-    super(informationSerialNumber);
+class ServerInformationTransmission extends InformationTransmissionPacket {
+  getTitle() {
+    return 'Information transmission server response';
+  }
+
+  assign(reservedExtensionBit) {
+    this.reservedExtensionBitLength = reservedExtensionBit.length;
+    this.reservedExtensionBit = reservedExtensionBit;
   }
 
   writeContent(writer) {
@@ -73,4 +82,4 @@ class ConcoxServerInformationTransmission extends ConcoxInformationTransmissionP
   }
 }
 
-module.exports = { ConcoxTerminalInformationTransmission, ConcoxServerInformationTransmission, ConcoxModule };
+module.exports = { TerminalInformationTransmission, ServerInformationTransmission, PacketModule };

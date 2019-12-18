@@ -1,38 +1,53 @@
-const ConcoxPacket = require('./concoxPacket');
+const Packet = require('./packet');
 
 
-class ConcoxLoginPacket extends ConcoxPacket {
+class LoginPacket extends Packet {
   getProtocolNumber() {
     return 0x01;
   }
 }
 
 
-class ConcoxTerminalLogin extends ConcoxLoginPacket {
-  constructor(imei, modelIdentificationCode, timeZone, informationSerialNumber) {
-    super(informationSerialNumber);
+class TerminalLogin extends LoginPacket {
+  get language() {
+    return 0b10;
+  }
 
-    this.infoContent = {
-      imei,
-      modelIdentificationCode,
-      timeZone
-    }
+  getTitle() {
+    return 'Login packet';
   }
 
   getEncryptedCrc() {
     return true;
   }
 
+  assign(imei, modelIdentificationCode, timeZone) {
+    this.infoContent = {
+      imei,
+      modelIdentificationCode,
+      timeZoneLanguage: { timeZone, language: this.language }
+    }
+  }
+
   writeContent(writer) {
-    writer.writeBytes(ConcoxTerminalLogin.imeiToBinary(this.infoContent.imei));
+    writer.writeBytes(TerminalLogin.imeiToBinary(this.infoContent.imei));
     writer.writeBytes(this.infoContent.modelIdentificationCode);
-    writer.writeWord(ConcoxTerminalLogin.packTimeZoneLanguage(this.infoContent.timeZone, 0b10));
+
+    writer.writeWord(
+      TerminalLogin.packTimeZoneLanguage(
+        this.infoContent.timeZoneLanguage.timeZone,
+        this.infoContent.timeZoneLanguage.language));
   }
 
   readContent(reader) {
-    this.infoContent.imei = ConcoxTerminalLogin.imeiToString(reader.readBytes(8));
-    this.infoContent.modelIdentificationCode = reader.readBytes(2);
-    this.infoContent.timeZoneLanguage = ConcoxTerminalLogin.unpackTimeZoneLanguage(reader.readWord());
+    const imei = TerminalLogin.imeiToString(reader.readBytes(8));
+    const modelIdentificationCode = reader.readBytes(2);
+    const timeZoneLanguage = TerminalLogin.unpackTimeZoneLanguage(reader.readWord());
+
+    this.infoContent = {
+      imei,
+      modelIdentificationCode, 
+      timeZoneLanguage }
   }
 
   static imeiToBinary(imei) {
@@ -89,11 +104,14 @@ class ConcoxTerminalLogin extends ConcoxLoginPacket {
 }
 
 
-class ConcoxServerLogin extends ConcoxLoginPacket {
-  constructor(dateTime, reservedExtensionBit, informationSerialNumber) {
-    super(informationSerialNumber);
+class ServerLogin extends LoginPacket {
+  getTitle() {
+    return 'Login packet server response';
+  }
 
+  assign(dateTime, reservedExtensionBit) {
     this.dateTime = dateTime;
+    this.reservedExtensionBitLength = reservedExtensionBit.length;
     this.reservedExtensionBit = reservedExtensionBit;
   }
 
@@ -124,4 +142,4 @@ class ConcoxServerLogin extends ConcoxLoginPacket {
   }
 }
 
-module.exports = { ConcoxTerminalLogin, ConcoxServerLogin };
+module.exports = { TerminalLogin, ServerLogin };
