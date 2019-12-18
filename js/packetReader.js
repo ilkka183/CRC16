@@ -47,6 +47,15 @@ class ConcoxReader {
     return (upper << 8) | lower;
   }
 
+  readDoubleWord() {
+    const byte3 = this.readByte();
+    const byte2 = this.readByte();
+    const byte1 = this.readByte();
+    const byte0 = this.readByte();
+
+    return (byte3 << 24) | (byte2 << 16) | (byte1 << 8) | byte0;
+  }
+
   readString(length) {
     let result = '';
 
