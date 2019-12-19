@@ -35,24 +35,42 @@ class TerminalWifiInformation extends WifiInformationPacket {
     const CI = reader.readTripleByte();
     const RSSI = reader.readByte();
 
-    const items = [];
+    const main = {
+      MCC,
+      MNC,
+      LAC,
+      CI,
+      RSSI,
+    }
+
+    const subs = [];
 
     for (let i = 0; i < 6; i++) {
       const LAC = reader.readWord();
       const CI = reader.readTripleByte();
       const RSSI = reader.readByte();
 
-      items.push({ LAC, CI, RSSI });
+      subs.push({ LAC, CI, RSSI });
+    }
+
+    const timeLeads = reader.readByte();
+    const wifiQuantity = reader.readByte();
+    const wifis = [];
+
+    for (let i = 0; i < wifiQuantity; i++) {
+      const MAC = reader.readBytes(6);
+      const strength = reader.readByte();
+
+      wifis.push({ MAC, strength });
     }
 
     this.infoContent = {
       dateTime,
-      MCC,
-      MNC,
-      LAC,
-      CI,
-      RSSI,
-      items
+      main,
+      subs,
+      timeLeads,
+      wifiQuantity,
+      wifis
     }
   }
 }

@@ -8,29 +8,6 @@ class InformationTransmissionPacket extends Packet {
 }
 
 
-class PacketModule {
-  constructor(number, content) {
-    this.number = number;
-    this.content = content;
-  }
-
-  get length() {
-    return this.content.length;
-  }
-
-  write(writer) {
-    writer.writeByte(this.number);
-    writer.writeWord(this.content.length);
-    writer.writeBytes(this.content);
-  }
-
-  read(reader) {
-    this.number = reader.readByte();
-    const length = reader.readWord();
-    this.content = reader.readBytes(length);
-  }
-}
-
 class TerminalInformationTransmission extends InformationTransmissionPacket {
   getTitle() {
     return 'Information transmission';
@@ -41,21 +18,25 @@ class TerminalInformationTransmission extends InformationTransmissionPacket {
   }
 
   writeContent(writer) {
-    for (const number in this.modules) 
-      this.modules[number].write(writer, number);
+    for (const item of this.modules) {
+      writer.writeByte(item.number);
+      writer.writeWord(item.content.length);
+      writer.writeBytes(item.content);
+    }
   }
 
   readContent(reader) {
-    this.modules = [];
-    let length = 0;
+    this.infoContent = [];
+    let totalLength = 0;
 
-    while (length < this.contentLength) {
-      const item = new PacketModule();
-      item.read(reader);
+    while (totalLength < this.contentLength) {
+      const number = reader.readByte();
+      const length = reader.readWord();
+      const content = reader.readBytes(length);
+  
+      this.infoContent.push({ number, length, content });
 
-      this.modules.push(item);
-
-      length += item.length + 3;
+      totalLength += length + 3;
     }
   }
 }
@@ -82,4 +63,4 @@ class ServerInformationTransmission extends InformationTransmissionPacket {
   }
 }
 
-module.exports = { TerminalInformationTransmission, ServerInformationTransmission, PacketModule };
+module.exports = { TerminalInformationTransmission, ServerInformationTransmission };

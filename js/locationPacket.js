@@ -33,7 +33,7 @@ class TerminalLocation extends LocationPacket {
     let gpsInformation = undefined;
 
     if (gpsInformationLength > 0) {
-      const gpsInformationSatellites = reader.readBytes(1);
+      const gpsInformationSatellites = reader.readByte();
       const latitude = reader.readDoubleWord();
       const longitude = reader.readDoubleWord();
       const speed = reader.readByte();

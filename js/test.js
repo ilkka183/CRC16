@@ -5,15 +5,16 @@ const { TerminalHeartbeat, ServerHeartbeat } = require('./heartbeatPacket');
 const { TerminalLocation, ServerLocation } = require('./locationPacket');
 const { TerminalWifiInformation } = require('./wifiInformationPacket');
 const { TerminalOnlineCommand, ServerOnlineCommand } = require('./onlineCommandPacket');
-const { TerminalInformationTransmission, ServerInformationTransmission, PacketModule } = require('./informationTransmissionPacket');
+const { TerminalInformationTransmission, ServerInformationTransmission } = require('./informationTransmissionPacket');
 
 
 
-function parsePacket(hex, device) {
-  const packet = PacketParser.parse(Concox.toBinary(hex), device);
+function parse(hex, device) {
+  const data = Concox.toBinary(hex);
+  const packet = PacketParser.parse(data, device);
 
   if (packet)
-    packet.log();
+    packet.log(data);
 }
 
 function compare(packet, hex, device) {
@@ -61,10 +62,8 @@ function testHeartbeat() {
 }
 
 function testLocation() {
-  let packet = new TerminalLocation();
-  packet.assign(192, 290, 4, 1);
-  packet.serialNumber = 8;
-  compare(packet, '79 79 00 6F 33 11 03 14 09 06 08 00 09 01 CC 00 28 7D 00 1F 40 0E 24 28 7D 00 1F 71 07 28 7D 00 1E 3F 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 31 00 36 76 05 BB 5D 46 00 87 36 31 87 5B 48 CC 7B 35 36 61 A6 4C 00 E0 4B 8C BF 58 4F 78 A1 06 54 15 DE 4F 00 87 46 1B 9D 84 51 26 52 F3 AD B1 94 55 A1 00 00 08 38 B2 0D 0A', Device.TERMINAL);
+//  parse('79 79 00 6F 33 11 03 14 09 06 08 00 09 01 CC 00 28 7D 00 1F 40 0E 24 28 7D 00 1F 71 07 28 7D 00 1E 3F 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 31 00 36 76 05 BB 5D 46 00 87 36 31 87 5B 48 CC 7B 35 36 61 A6 4C 00 E0 4B 8C BF 58 4F 78 A1 06 54 15 DE 4F 00 87 46 1B 9D 84 51 26 52 F3 AD B1 94 55 A1 00 00 08 38 B2 0D 0A', Device.TERMINAL);
+  parse('79 79 00 4A 32 13 0C 10 0C 38 19 0C C5 05 11 FC 00 04 3F A2 50 00 14 62 09 00 FA 01 00 0A 00 17 08 21 24 00 0A 00 5B 4C 2E 00 11 00 5B 42 24 00 0A 00 2C E3 1F 00 0A 00 17 05 1B 00 0A 00 5B 4D 1B 00 11 00 5B 43 1B 00 0F 00 00 06 6D 04 0D 0A', Device.TERMINAL);
 
   packet = new ServerLocation();
   packet.serialNumber = 8;
@@ -72,10 +71,7 @@ function testLocation() {
 }
 
 function testWifiInformation() {
-  let packet = new TerminalWifiInformation();
-  packet.assign(192, 290, 4, 1);
-  packet.serialNumber = 0x1F;
-  compare(packet, '78 78 48 2C 10 06 0E 02 2D 35 01 CC 00 28 7D 00 1F 71 2D 28 7D 00 1E 17 25 28 7D 00 1E 23 1E 28 7D 00 1F 72 1C 28 7D 00 1F 40 12 00 00 00 00 00 00 00 00 00 00 00 00 FF 02 80 89 17 44 98 B4 5C CC 7B 35 36 61 A6 5B 00 1F A0 04 0D 0A', Device.TERMINAL);
+  parse('78 78 48 2C 10 06 0E 02 2D 35 01 CC 00 28 7D 00 1F 71 2D 28 7D 00 1E 17 25 28 7D 00 1E 23 1E 28 7D 00 1F 72 1C 28 7D 00 1F 40 12 00 00 00 00 00 00 00 00 00 00 00 00 FF 02 80 89 17 44 98 B4 5C CC 7B 35 36 61 A6 5B 00 1F A0 04 0D 0A', Device.TERMINAL);
 }
 
 function testOnlineCommand() {
@@ -92,9 +88,9 @@ function testOnlineCommand() {
 
 function testInformationTransmission() {
   const modules = [
-    new PacketModule(0, Concox.toBinary('08 68 12 01 48 37 35 71')),
-    new PacketModule(1, Concox.toBinary('04 60 04 03 40 00 99 32')),
-    new PacketModule(2, Concox.toBinary('89 86 02 B3 13 15 90 10 99 32'))
+    { number: 0, content: Concox.toBinary('08 68 12 01 48 37 35 71') },
+    { number: 1, content: Concox.toBinary('04 60 04 03 40 00 99 32') },
+    { number: 2, content: Concox.toBinary('89 86 02 B3 13 15 90 10 99 32') }
   ];
 
   let packet = new TerminalInformationTransmission();
@@ -109,45 +105,52 @@ function testInformationTransmission() {
 }
 
 function buildExample() {
-  Concox.compare(
-    ConcoxTerminalLogin.build('0355951091347489', [0x36, 0x08], 100, 1),
-    Concox.toBinary('78 78 11 01 03 55 95 10 91 34 74 89 36 08 06 42 00 01 15 FC 0D 0A'));
+  let packet = new TerminalLogin();
+  packet.assign('0355951091347489', [0x36, 0x08], 100);
+  packet.serialNumber = 1;
+  compare(packet, '78 78 11 01 03 55 95 10 91 34 74 89 36 08 06 42 00 01 15 FC 0D 0A', Device.TERMINAL);
   
-  Concox.compare(
-    ConcoxServerLogin.build({ year: 19, month: 12, day: 13, hour: 2, min: 57, second: 12 }, [], 1),
-    Concox.toBinary('78 78 0C 01 13 0C 0D 02 39 0C 00 00 01 F6 EC 0D 0A'));
+  packet = new ServerLogin();
+  packet.assign({ year: 19, month: 12, day: 13, hour: 2, min: 57, second: 12 }, []);
+  packet.serialNumber = 1;
+  compare(packet, '78 78 0C 01 13 0C 0D 02 39 0C 00 00 01 F6 EC 0D 0A', Device.SERVER);
   
-  Concox.compare(
-    ConcoxServerInformationTransmission.build([], 0),
-    Concox.toBinary('79 79 00 06 98 00 00 00 C7 00 0D 0A'));
-    
-  Concox.compare(
-    ConcoxTerminalHeartbeat.build(1, 402, 4, 1, 3),
-    Concox.toBinary('78 78 0B 23 01 01 92 04 00 01 00 03 4B 7F 0D 0A'));
-  
-  Concox.compare(
-    ConcoxServerHeartbeat.build(3),
-    Concox.toBinary('78 78 05 23 00 03 4C 4D 0D 0A'));
-  
-  Concox.compare(
-    ConcoxTerminalHeartbeat.build(1, 402, 4, 1, 4),
-    Concox.toBinary('78 78 0B 23 01 01 92 04 00 01 00 04 3F C0 0D 0A'));
-  
-  Concox.compare(
-    ConcoxServerHeartbeat.build(4),
-    Concox.toBinary('78 78 05 23 00 04 38 F2 0D 0A'));
-}
+  packet = new ServerInformationTransmission();
+  packet.assign([]);
+  packet.serialNumber = 0;
+  compare(packet, '79 79 00 06 98 00 00 00 C7 00 0D 0A', Device.SERVER);
+
+  packet = new TerminalHeartbeat();
+  packet.assign(1, 402, 4, 1);
+  packet.serialNumber = 3;
+  compare(packet, '78 78 0B 23 01 01 92 04 00 01 00 03 4B 7F 0D 0A', Device.TERMINAL)
+ 
+  packet = new ServerHeartbeat();
+  packet.assign();
+  packet.serialNumber = 3;
+  compare(packet, '78 78 05 23 00 03 4C 4D 0D 0A', Device.SERVER)
+ 
+  packet = new TerminalHeartbeat();
+  packet.assign(1, 402, 4, 1);
+  packet.serialNumber = 4;
+  compare(packet, '78 78 0B 23 01 01 92 04 00 01 00 04 3F C0 0D 0A', Device.TERMINAL)
+ 
+  packet = new ServerHeartbeat();
+  packet.assign();
+  packet.serialNumber = 4;
+  compare(packet, '78 78 05 23 00 04 38 F2 0D 0A', Device.SERVER)
+ }
 
 function parseExample() {
-  parsePacket('78 78 11 01 03 55 95 10 91 34 74 89 36 08 06 42 00 01 15 FC 0D 0A', Device.TERMINAL);
-  parsePacket('78 78 0C 01 13 0C 0D 02 39 0C 00 00 01 F6 EC 0D 0A', Device.SERVER);
-  parsePacket('79 79 00 06 98 00 00 00 C7 00 0D 0A', Device.SERVER);
+  parse('78 78 11 01 03 55 95 10 91 34 74 89 36 08 06 42 00 01 15 FC 0D 0A', Device.TERMINAL);
+  parse('78 78 0C 01 13 0C 0D 02 39 0C 00 00 01 F6 EC 0D 0A', Device.SERVER);
+  parse('79 79 00 06 98 00 00 00 C7 00 0D 0A', Device.SERVER);
 
-  parsePacket('78 78 0B 23 01 01 92 04 00 01 00 03 4B 7F 0D 0A', Device.TERMINAL);
-  parsePacket('78 78 05 23 00 03 4C 4D 0D 0A', Device.SERVER);
+  parse('78 78 0B 23 01 01 92 04 00 01 00 03 4B 7F 0D 0A', Device.TERMINAL);
+  parse('78 78 05 23 00 03 4C 4D 0D 0A', Device.SERVER);
   
-  parsePacket('78 78 0B 23 01 01 92 04 00 01 00 04 3F C0 0D 0A', Device.TERMINAL);
-  parsePacket('78 78 05 23 00 04 38 F2 0D 0A', Device.SERVER);
+  parse('78 78 0B 23 01 01 92 04 00 01 00 04 3F C0 0D 0A', Device.TERMINAL);
+  parse('78 78 05 23 00 04 38 F2 0D 0A', Device.SERVER);
 }
 
 /*
@@ -179,9 +182,9 @@ echo -n '78781101035595109134748936080642000115FC0D0A' | xxd -r -ps | nc 40.115.
 //testLogin();
 //testHeartbeat();
 //testLocation();
-testWifiInformation();
+//testWifiInformation();
 //testOnlineCommand();
 //testInformationTransmission();
 
-//buildExample();
+buildExample();
 //parseExample();
