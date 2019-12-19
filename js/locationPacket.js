@@ -30,38 +30,64 @@ class TerminalLocation extends LocationPacket {
     const dateTime = { year, month, day, hour, min, second }
 
     const gpsInformationLength = reader.readByte();
-    const gpsInformationSatellites = reader.readBytes(1);
-    const latitude = reader.readDoubleWord();
-    const longitude = reader.readDoubleWord();
-    const speed = reader.readByte();
-    const course = reader.readWord();
+    let gpsInformation = undefined;
+
+    if (gpsInformationLength > 0) {
+      const gpsInformationSatellites = reader.readBytes(1);
+      const latitude = reader.readDoubleWord();
+      const longitude = reader.readDoubleWord();
+      const speed = reader.readByte();
+      const course = reader.readWord();
+
+      gpsInformation = {
+        gpsInformationSatellites,
+        latitude,
+        longitude,
+        speed,
+        course,
+      }
+    }
+
     const mainBaseStationLength = reader.readByte();
-    const MCC = reader.readBytes(2);
-    const MNC = reader.readByte();
-    const LAC = reader.readBytes(2);
-    const CI = reader.readBytes(3);
-    const RSSI = reader.readByte();
+    let mainBaseStation = undefined;
+
+    if (mainBaseStationLength > 0) {
+      const MCC = reader.readWord();
+      const MNC = reader.readByte();
+      const LAC = reader.readWord();
+      const CI = reader.readTripleByte();
+      const RSSI = reader.readByte();
+
+      mainBaseStation = {
+        MCC,
+        MNC,
+        LAC,
+        CI,
+        RSSI
+      }
+    }
 
     const subBaseStationLength = reader.readByte();
-    const LBS = [];
+    const subBaseStationCount = subBaseStationLength/6;
+    const subBaseStations = [];
 
-    for (let i = 0; i < 4; i++) {
-      const NLAC = reader.readWord();
-      const NCI = reader.readBytes(3);
-      const NRSSI = reader.readByte();
+    for (let i = 0; i < subBaseStationCount; i++) {
+      const LAC = reader.readWord();
+      const CI = reader.readTripleByte();
+      const RSSI = reader.readByte();
 
-      LBS.push({ NLAC, NCI, NRSSI });
+      subBaseStations.push({ LAC, CI, RSSI });
     }
     
     const wifiMessageLength = reader.readByte();
-    const wifiCount = wifiMessageLength/7;
-    const wifis = [];
+    const wifiMessageCount = wifiMessageLength/7;
+    const wifiMessages = [];
 
-    for (let i = 0; i < wifiCount; i++) {
+    for (let i = 0; i < wifiMessageCount; i++) {
       const MAC = reader.readBytes(6);
-      const Strength = reader.readByte();
+      const strength = reader.readByte();
   
-      wifis.push({ MAC, Strength });
+      wifiMessages.push({ MAC, strength });
     }
     
     const status = reader.readByte();
@@ -71,21 +97,13 @@ class TerminalLocation extends LocationPacket {
     this.infoContent = {
       dateTime,
       gpsInformationLength,
-      gpsInformationSatellites,
-      latitude,
-      longitude,
-      speed,
-      course,
+      gpsInformation,
       mainBaseStationLength,
-      MCC,
-      MNC,
-      LAC,
-      CI,
-      RSSI,
+      mainBaseStation,
       subBaseStationLength,
-      LBS,
+      subBaseStations,
       wifiMessageLength,
-      wifis,
+      wifiMessages,
       status,
       reservedExtensionBitLength,
       reservedExtensionBit

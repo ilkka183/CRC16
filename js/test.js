@@ -3,6 +3,7 @@ const PacketParser = require('./packetParser');
 const { TerminalLogin, ServerLogin } = require('./loginPacket');
 const { TerminalHeartbeat, ServerHeartbeat } = require('./heartbeatPacket');
 const { TerminalLocation, ServerLocation } = require('./locationPacket');
+const { TerminalWifiInformation } = require('./wifiInformationPacket');
 const { TerminalOnlineCommand, ServerOnlineCommand } = require('./onlineCommandPacket');
 const { TerminalInformationTransmission, ServerInformationTransmission, PacketModule } = require('./informationTransmissionPacket');
 
@@ -68,6 +69,13 @@ function testLocation() {
   packet = new ServerLocation();
   packet.serialNumber = 8;
   compare(packet, '79 79 00 05 33 00 08 44 A2 0D 0A', Device.SERVER);
+}
+
+function testWifiInformation() {
+  let packet = new TerminalWifiInformation();
+  packet.assign(192, 290, 4, 1);
+  packet.serialNumber = 0x1F;
+  compare(packet, '78 78 48 2C 10 06 0E 02 2D 35 01 CC 00 28 7D 00 1F 71 2D 28 7D 00 1E 17 25 28 7D 00 1E 23 1E 28 7D 00 1F 72 1C 28 7D 00 1F 40 12 00 00 00 00 00 00 00 00 00 00 00 00 FF 02 80 89 17 44 98 B4 5C CC 7B 35 36 61 A6 5B 00 1F A0 04 0D 0A', Device.TERMINAL);
 }
 
 function testOnlineCommand() {
@@ -170,7 +178,8 @@ echo -n '78781101035595109134748936080642000115FC0D0A' | xxd -r -ps | nc 40.115.
 
 //testLogin();
 //testHeartbeat();
-testLocation();
+//testLocation();
+testWifiInformation();
 //testOnlineCommand();
 //testInformationTransmission();
 
