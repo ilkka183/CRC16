@@ -11,7 +11,7 @@ class TerminalOnlineCommand extends OnlineCommandPacket {
   }
 
   getTitle() {
-    return 'Online command terminal response';
+    return 'Online command (terminal response)';
   }
 
   assign(flags, encoding, command) {
@@ -48,7 +48,7 @@ class ServerOnlineCommand extends OnlineCommandPacket {
   }
 
   getTitle() {
-    return 'Online command';
+    return 'Online command (server request)';
   }
 
   assign(command) {

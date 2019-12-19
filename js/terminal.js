@@ -1,7 +1,7 @@
 const net = require('net');
+const ConcoxService = require('./service');
 const PacketParser = require('./packetParser');
-const ConcoxDevice = require('./device');
-const { Device, Concox } = require('./concox');
+const { Device } = require('./concox');
 const { TerminalLogin } = require('./loginPacket');
 const { TerminalHeartbeat } = require('./heartbeatPacket');
 const { TerminalInformationTransmission } = require('./informationTransmissionPacket');
@@ -9,8 +9,8 @@ const { TerminalInformationTransmission } = require('./informationTransmissionPa
 const HOST = 'localhost';
 
 
-class ConcoxTerminal extends ConcoxDevice {
-  constructor(imei, modelIdentificationCode, host = HOST, port = ConcoxDevice.defaultPort) {
+class ConcoxTerminal extends ConcoxService {
+  constructor(imei, modelIdentificationCode, host = HOST, port = ConcoxService.defaultPort) {
     super();
 
     this.imei = imei,
@@ -95,6 +95,7 @@ const modelIdentificationCode = [0x36, 0x08];
 const host = 'localhost';
 
 const terminal = new ConcoxTerminal(imei, modelIdentificationCode, host);
+terminal.detailLog = true;
 terminal.login(100, 1);
 //terminal.heartbeat();
 //terminal.heartbeat();

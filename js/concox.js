@@ -70,6 +70,10 @@ class Concox {
 
     return data;
   }
+
+  static logObject(object) {
+    console.log(JSON.stringify(object, null, 2));
+  }
 }
 
 module.exports = { Concox, Device };

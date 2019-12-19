@@ -1,13 +1,13 @@
-const { Device, Concox } = require('./concox');
+const { Concox } = require('./concox');
 
 
-class ConcoxDevice {
+class ConcoxService {
   static get defaultPort() {
     return 1234;
   }
 
-  constructor(detailLog = false) {
-    this.detailLog = detailLog;
+  constructor() {
+    this.detailLog = false;
   }
 
   logData(text, data) {
@@ -33,4 +33,4 @@ class ConcoxDevice {
   }
 }
 
-module.exports = ConcoxDevice;
+module.exports = ConcoxService;

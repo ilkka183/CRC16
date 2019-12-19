@@ -1,5 +1,5 @@
-const { Concox } = require('./concox');
 const PacketWriter = require('./packetWriter');
+const { Concox } = require('./concox');
 
 
 class ConcoxPacket {
@@ -86,8 +86,8 @@ class ConcoxPacket {
 
     if (data)
       console.log(Concox.toHex(data));
-      
-    console.log(this);
+
+    Concox.logObject(this);
   }
 }
 

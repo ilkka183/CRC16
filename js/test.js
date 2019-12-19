@@ -27,15 +27,12 @@ function compare(packet, hex, device) {
     console.log('<<< ERROR >>>');
     console.log(Concox.toHex(data1));
     console.log(Concox.toHex(data2));
-    console.log('=== ERROR ===');
-    console.log(data1);
-    console.log(data2);
     console.log('<<< ERROR >>>');
   }
   else
     console.log(Concox.toHex(data1));
 
-  console.log(PacketParser.parse(data1, device));
+  Concox.logObject(PacketParser.parse(data1, device));
 }
 
 function testLogin() {
@@ -154,12 +151,6 @@ function parseExample() {
 }
 
 /*
-echo -n '787811010868120148373571360532020039DEF70D0A' | xxd -r -ps | nc 40.115.232.141 21105 | hexdump -C
-echo -n '78781101086812014837357136053202003A9F050D0A' | xxd -r -ps | nc 40.115.232.141 21105 | hexdump -C
-echo -n '78781101035595109291885836053202003906890D0A' | xxd -r -ps | nc 40.115.232.141 21105 | hexdump -C
-echo -n '78781101035595109134748936080642000115FC0D0A' | xxd -r -ps | nc 40.115.232.141 21105 | hexdump -C
-echo -n '78781101035595109134748936080642000115FC0D0A' | xxd -r -ps | nc 40.115.232.141 21105 | hexdump -C
-
 78 78 11 01 03 55 95 10 91 34 74 89 36 08 06 42 00 01 15 FC 0D 0A
 78 78 0C 01 13 0C 0D 02 39 0C 00 00 01 F6 EC 0D 0A
 79 79 00 06 98 00 00 00 C7 00 0D 0A
@@ -181,10 +172,10 @@ echo -n '78781101035595109134748936080642000115FC0D0A' | xxd -r -ps | nc 40.115.
 
 //testLogin();
 //testHeartbeat();
-//testLocation();
+testLocation();
 //testWifiInformation();
 //testOnlineCommand();
 //testInformationTransmission();
 
-buildExample();
+//buildExample();
 //parseExample();

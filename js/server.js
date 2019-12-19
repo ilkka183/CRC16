@@ -1,19 +1,28 @@
 const net = require('net');
-const ConcoxDevice = require('./device');
+const ConcoxService = require('./service');
 const PacketParser = require('./packetParser');
 const { Device } = require('./concox');
 const { ServerLogin } = require('./loginPacket');
 const { ServerHeartbeat } = require('./heartbeatPacket');
+const { ServerLocation } = require('./locationPacket');
 const { ServerOnlineCommand } = require('./onlineCommandPacket');
 const { ServerInformationTransmission } = require('./informationTransmissionPacket');
 
 
-class ConcoxServer extends ConcoxDevice {
-  constructor(port = ConcoxDevice.defaultPort) {
+/*
+
+ssh ilkka@superapp1.superapp.fi
+https://docs.google.com/document/d/1laqBur8dCCLdN_wswdgb3KhQrnBgXfdjtgCCoN1dHhY/edit
+
+*/
+
+class ConcoxServer extends ConcoxService {
+  constructor(port = ConcoxService.defaultPort) {
     super();
 
     this.port = port;
     this.server = null;
+    this.serialNumber = null;
   }
 
   sendPacket(connection, packet) {
@@ -24,49 +33,68 @@ class ConcoxServer extends ConcoxDevice {
     connection.write(buffer);
   }
 
-  responseToLogin(request, connection) {
-    const response = new ServerLogin();
-    response.assign({ year: 19, month: 12, day: 13, hour: 2, min: 57, second: 12 }, []);
-    response.serialNumber = request.serialNumber;
+  sendCommand(connection, command) {
+    const response = new ServerOnlineCommand();
+    response.assign(command);
+    response.serialNumber = this.serialNumber;
 
     this.sendPacket(connection, response);
   }
 
-  responseToHeartbeat(request, connection) {
+  sendLoginResponse(connection) {
+    const time = new Date();
+
+    const response = new ServerLogin();
+
+    response.assign({
+      year: time.getFullYear() - 2000,
+      month: time.getMonth() + 1,
+      day: time.getDate(),
+      hour: time.getHours(),
+      min: time.getMinutes(),
+      second: time.getSeconds() },
+      []);
+
+    response.serialNumber = this.serialNumber;
+
+    this.sendPacket(connection, response);
+  }
+
+  sendHeartbeatResponse(connection) {
     let response = new ServerHeartbeat();
     response.assign();
-    response.serialNumber = request.serialNumber;
+    response.serialNumber = this.serialNumber;
 
     this.sendPacket(connection, response);
 
-    response = new ServerOnlineCommand();
-    response.assign('UNLOCK#');
-    response.serialNumber = request.serialNumber;
+    this.sendCommand(connection, 'UNLOCK#');
+  }
+
+  sendLocationResponse(connection) {
+    let response = new ServerLocation();
+    response.assign();
+    response.serialNumber = this.serialNumber;
 
     this.sendPacket(connection, response);
   }
 
-  responseToInformationTransmission(request, connection) {
+  sendInformationTransmissionResponse(connection) {
     const response = new ServerInformationTransmission();
     response.assign([]);
-    response.serialNumber = request.serialNumber;
+    response.serialNumber = this.serialNumber;
 
     this.sendPacket(connection, response);
   }
 
-  responseTo(request, connection) {
+  processRequest(connection, request) {
+    this.serialNumber = request.serialNumber;
+
     switch (request.protocolNumber) {
-      case 0x01:
-        this.responseToLogin(request, connection);
-        break;
-
-      case 0x23:
-        this.responseToHeartbeat(request, connection);
-        break;
-
-      case 0x98:
-        this.responseToInformationTransmission(request, connection);
-        break;
+      case 0x01: this.sendLoginResponse(connection); break;
+      case 0x23: this.sendHeartbeatResponse(connection); break;
+      case 0x32: this.sendLocationResponse(connection); break;
+      case 0x33: this.sendLocationResponse(connection); break;
+      case 0x98: this.sendInformationTransmissionResponse(connection); break;
     }
   }
 
@@ -80,7 +108,7 @@ class ConcoxServer extends ConcoxDevice {
 
         if (request) {
           this.logPacket(request, data);
-          this.responseTo(request, connection);
+          this.processRequest(connection, request);
         } else {
           this.logData('Unknown client request', data);
         }
@@ -102,4 +130,5 @@ class ConcoxServer extends ConcoxDevice {
 }
 
 const server = new ConcoxServer();
+server.detailLog = true;
 server.start();
