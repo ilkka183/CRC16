@@ -1,0 +1,20 @@
+GET http://localhost:3000/api/
+###
+GET http://localhost:3000/api/123456789123456
+###
+POST http://localhost:3000/api/
+content-type: application/json
+
+{
+  "imei": "123456789123456",
+  "phone": "05061698"
+}
+###
+PUT http://localhost:3000/api/123456789123456
+content-type: application/json
+
+{
+  "command": "UNLOCK#"
+}
+###
+DELETE http://localhost:3000/api/123456789123456
