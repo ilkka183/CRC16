@@ -10,7 +10,7 @@ class InformationTransmissionPacket extends Packet {
 
 class TerminalInformationTransmission extends InformationTransmissionPacket {
   getTitle() {
-    return 'Information transmission';
+    return 'Information transmission (terminal request)';
   }
 
   assign(modules) {
@@ -44,7 +44,7 @@ class TerminalInformationTransmission extends InformationTransmissionPacket {
 
 class ServerInformationTransmission extends InformationTransmissionPacket {
   getTitle() {
-    return 'Information transmission server response';
+    return 'Information transmission (server response)';
   }
 
   assign(reservedExtensionBit) {

@@ -1,12 +1,13 @@
 const net = require('net');
-const ConcoxService = require('./service');
+const ConcoxLogger = require('./logger');
 const PacketParser = require('./lib/packetParser');
+const { Terminal, Terminals } = require('./terminals')
 const { Device } = require('./lib/concox');
-const { ServerHeartbeat } = require('./packets/heartbeatPacket');
-const { ServerLocation } = require('./packets/locationPacket');
-const { ServerLogin } = require('./packets/loginPacket');
-const { ServerInformationTransmission } = require('./packets/informationTransmissionPacket');
-const { ServerOnlineCommand } = require('./packets/onlineCommandPacket');
+const { ServerHeartbeat } = require('./packets/heartbeat');
+const { ServerLocation } = require('./packets/location');
+const { ServerLogin } = require('./packets/login');
+const { ServerInformationTransmission } = require('./packets/informationTransmission');
+const { ServerOnlineCommand } = require('./packets/onlineCommand');
 
 
 /*
@@ -16,13 +17,15 @@ https://docs.google.com/document/d/1laqBur8dCCLdN_wswdgb3KhQrnBgXfdjtgCCoN1dHhY/
 
 */
 
-class ConcoxServer extends ConcoxService {
-  constructor(port = ConcoxService.defaultPort) {
+class ConcoxServer extends ConcoxLogger {
+  constructor() {
     super();
 
-    this.port = port;
     this.server = null;
     this.serialNumber = null;
+
+    this.terminals = new Terminals();
+    this.terminals.populate();
   }
 
   sendPacket(connection, packet) {
@@ -66,8 +69,8 @@ class ConcoxServer extends ConcoxService {
     response.serialNumber = this.serialNumber;
 
     this.sendPacket(connection, response);
-
-    this.sendCommand(connection, 'UNLOCK#');
+  
+//    this.sendCommand(connection, 'UNLOCK#');
   }
 
   sendLocationResponse(connection) {
@@ -98,7 +101,7 @@ class ConcoxServer extends ConcoxService {
     }
   }
 
-  start() {
+  start(port) {
     this.server = net.createServer(connection => {
       console.log('Client connected from ' + connection.remoteAddress + ':' + connection.remotePort);
     
@@ -123,12 +126,10 @@ class ConcoxServer extends ConcoxService {
       });
     });
 
-    this.server.listen(this.port, () => {
-      console.log('TCP server listening on', this.server.address());
+    this.server.listen(port, () => {
+      console.log('Juro TCP server listening on', this.server.address());
     });
   }
 }
 
-const server = new ConcoxServer();
-server.detailLog = true;
-server.start();
+module.exports = ConcoxServer;

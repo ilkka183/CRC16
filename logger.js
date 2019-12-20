@@ -1,11 +1,7 @@
 const { Concox } = require('./lib/concox');
 
 
-class ConcoxService {
-  static get defaultPort() {
-    return 1234;
-  }
-
+class ConcoxLogger {
   constructor() {
     this.detailLog = false;
   }
@@ -33,4 +29,4 @@ class ConcoxService {
   }
 }
 
-module.exports = ConcoxService;
+module.exports = ConcoxLogger;

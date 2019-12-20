@@ -1,68 +1,104 @@
+const cors = require('cors')
 const express = require('express')
-const bodyParser = require('body-parser')
+const ConcoxServer = require('./server')
 
 const app = express()
-const port = 3000
+app.use(cors());
+app.use(express.json());
 
-app.use(bodyParser.json());
+const concox = new ConcoxServer();
+concox.detailLog = true;
+
 
 app.get('/api', (req, res) => {
-  const result = [
-    {
-      imei: '007',
-      phone: '+3585061698',
-      lat: 65,
-      lng: 25,
-      speed: 10
-    },
-    {
-      imei: '123',
-      phone: '+3585061698',
-      lat: 65,
-      lng: 25,
-      speed: 10
-    }
-  ]
-  
-  res.send(result);
+  res.send(concox.terminals.items);
 });
 
 app.get('/api/:imei', (req, res) => {
-  const result = {
-    imei: req.params.imei,
-    phone: '+3585061698',
-    lat: 65,
-    lng: 25,
-    speed: 10
-  };
-  
-  res.send(result);
+  res.send(concox.terminals.find(req.params.imei));
 });
 
 app.post('/api', (req, res) => {
-  const result = {
-    imei: req.body.imei,
-    phone: req.body.phone
-  };
+  const imei = req.body.imei;
   
-  res.send(result);
+  if (!concox.terminals.find(imei)) {
+    const item = new Terminal(imei, req.body.phone);
+    concox.terminals.add(item);
+  
+    res.status(201);
+    res.send(item);
+  } else {
+    res.status(400);
+    res.send(`Terminal with IMEI ${imei} already exists!`);
+  }
 });
 
 app.put('/api/:imei', (req, res) => {
-  const result = {
-    imei: req.params.imei,
-    command: req.body.command
-  };
-  
-  res.send(result);
+  const imei = req.params.imei;
+  const item = concox.terminals.find(imei);
+
+  if (item != null) {
+    if (req.body.lat)
+      item.lat = req.body.lat;
+    
+    if (req.body.lng)
+      item.lng = req.body.lng;
+    
+    if (req.body.speed)
+      item.speed = req.body.speed;
+    
+    res.send(item);
+  } else {
+    res.status(404);
+    res.send(`Terminal with IMEI ${imei} not found!`);
+  }
+});
+
+app.put('/api/command/:imei', (req, res) => {
+  const imei = req.params.imei;
+  const command = req.body.command;
+
+  console.log(imei + ': ' + command);
+
+  const item = concox.terminals.find(imei);
+
+  if (item != null) {
+    item.command = command;
+
+    const result = {
+      item,
+      command
+    };
+
+    res.send(result);
+  } else {
+    res.status(404);
+    res.send(`Terminal with IMEI ${imei} not found!`);
+  }
 });
 
 app.delete('/api/:imei', (req, res) => {
-  const result = {
-    imei: req.params.imei,
-  };
-  
-  res.send(result);
+  const imei = req.params.imei;
+  const index = concox.terminals.findIndex(imei);
+
+  if (index !== -1) {
+    concox.terminals.removeAt(index);
+
+    const result = {
+      imei,
+      index
+    };
+    
+    res.send(result);
+  } else {
+    res.status(404);
+    res.send(`Terminal with IMEI ${imei} not found!`);
+  }
 });
 
-app.listen(port, () => console.log(`Example app listening on port ${port}...`));
+
+const tcpPort = 1234;
+concox.start(tcpPort);
+
+const restPort = 3000;
+app.listen(restPort, () => console.log(`Juro REST server listening on port ${restPort}...`));
