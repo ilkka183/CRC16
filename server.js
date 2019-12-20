@@ -132,4 +132,9 @@ class ConcoxServer extends ConcoxLogger {
   }
 }
 
-module.exports = ConcoxServer;
+//module.exports = ConcoxServer;
+
+const tcpPort = 1234;
+const concox = new ConcoxServer();
+concox.detailLog = true;
+concox.start(tcpPort);

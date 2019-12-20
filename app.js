@@ -1,13 +1,10 @@
 const cors = require('cors')
 const express = require('express')
-const ConcoxServer = require('./server')
+//const ConcoxServer = require('./server')
 
 const app = express()
 app.use(cors());
 app.use(express.json());
-
-const concox = new ConcoxServer();
-concox.detailLog = true;
 
 
 app.get('/api', (req, res) => {
@@ -96,9 +93,6 @@ app.delete('/api/:imei', (req, res) => {
   }
 });
 
-
-const tcpPort = 1234;
-concox.start(tcpPort);
 
 const restPort = 3000;
 app.listen(restPort, () => console.log(`Juro REST server listening on port ${restPort}...`));
