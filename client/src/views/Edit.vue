@@ -36,7 +36,11 @@ export default {
   },
   methods: {
     post() {
-      this.cancel();
+      axios.put(this.host + '/api/' + this.imei, { terminal: this.terminal })
+        .then(response => {
+          window.console.log(response);
+          this.cancel();
+        });
     },
     cancel() {
       this.$router.go(-1);

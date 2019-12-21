@@ -47,6 +47,7 @@ export default {
     }
   },
   mounted() {
+    window.console.log('mounted');
     this.loadTerminals();
   },
   methods: {

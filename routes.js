@@ -8,6 +8,7 @@ terminals.populate();
 
 
 router.get('/', (req, res) => {
+  console.log(terminals.items);
   res.send(terminals.items);
 });
 
@@ -35,15 +36,18 @@ router.put('/:imei', (req, res) => {
   const item = terminals.find(imei);
 
   if (item != null) {
-    if (req.body.lat)
-      item.lat = req.body.lat;
+    if (req.body.terminal.lat)
+      item.lat = req.body.terminal.lat;
     
-    if (req.body.lng)
-      item.lng = req.body.lng;
+    if (req.body.terminal.lng)
+      item.lng = req.body.terminal.lng;
     
-    if (req.body.speed)
-      item.speed = req.body.speed;
-    
+    if (req.body.terminal.speed) {
+      item.speed = req.body.terminal.speed;
+    }
+
+    console.log(item);
+   
     res.send(item);
   } else {
     res.status(404);
