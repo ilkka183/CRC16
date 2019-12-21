@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1>Terminals</h1>
-    <p>{{host}}</p>
+    <p><span>REST API:</span><code>{{host}}</code></p>
     <button @click="addTerminal()">Add</button>
     <table class="grid">
       <tr>
@@ -54,7 +54,7 @@ export default {
       this.$router.push({ path: 'add' });
     },
     editTerminal(terminal) {
-      this.$router.push({ path: 'edit', params: terminal });
+      this.$router.push({ path: 'edit/' + terminal.imei });
     },
     removeTerminal(index) {
       this.terminals.splice(index, 1);

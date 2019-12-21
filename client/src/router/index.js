@@ -14,7 +14,7 @@ const routes = [
     component: () => import('../views/Add.vue')
   },
   {
-    path: '/edit',
+    path: '/edit/:imei',
     component: () => import('../views/Edit.vue')
   },
   {
