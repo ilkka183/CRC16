@@ -172,7 +172,7 @@ function parseExample() {
 
 //testLogin();
 //testHeartbeat();
-testLocation();
+//testLocation();
 //testWifiInformation();
 //testOnlineCommand();
 //testInformationTransmission();
