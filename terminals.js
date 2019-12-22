@@ -1,11 +1,13 @@
 class Terminal {
-  constructor(imei, phoneNumber) {
+  constructor(imei, phoneNumber, enabled) {
     this.imei = imei;
     this.phoneNumber = phoneNumber;
+    this.enabled = enabled;
     this.lat = undefined;
     this.lng = undefined;
     this.speed = undefined;
-    this.command = undefined;
+    this.ipAddress = undefined;
+    this.serialNumber = undefined;
   }
 }
 
@@ -16,11 +18,11 @@ class Terminals {
   }
 
   find(imei) {
-    return this.items.find(item => item.imei === imei);
+    return this.items.find(item => item.imei == imei);
   }
 
   findIndex(imei) {
-    return this.items.findIndex(item => item.imei === imei);
+    return this.items.findIndex(item => item.imei == imei);
   }
 
   add(item) {
@@ -37,8 +39,8 @@ class Terminals {
 
   populate() {
     this.clear();
-    this.add(new Terminal('355951091347489', '+358 44 950 9899'));
-    this.add(new Terminal('123456789012345', '+358 44 950 9900'));
+    this.add(new Terminal('355951091347489', '+358 44 950 9899', true));
+    this.add(new Terminal('123456789012345', '+358 44 950 9900', false));
   }
 }
 

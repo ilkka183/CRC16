@@ -11,6 +11,8 @@
         <th>Longitude</th>
         <th>Speed</th>
         <th>Enabled</th>
+        <th>IP address</th>
+        <th>Serial number</th>
         <th>Command</th>
         <th></th>
         <th></th>
@@ -22,17 +24,19 @@
         <td>{{terminal.lng}}</td>
         <td>{{terminal.speed}}</td>
         <td>{{terminal.enabled}}</td>
+        <td>{{terminal.ipAddress}}</td>
+        <td>{{terminal.serialNumber}}</td>
         <td>
           <div class="command">
             <input type="text" v-model="terminal.command">
-            <button class="gap" @click="sendCommand(terminal)">Send</button>
+            <button class="gap" :disabled="!terminal.command" @click="sendCommand(terminal)">Send</button>
           </div>
         </td>
         <td><button @click="editTerminal(terminal)">Edit</button></td>
-        <td><button @click="removeTerminal(index)">Remove</button></td>
+        <td><button @click="removeTerminal(terminal)">Remove</button></td>
       </tr>
     </table>
-    <div class="response"></div>
+    <div class="response"><pre>{{response}}</pre></div>
   </div>
 </template>
 
@@ -43,7 +47,8 @@ export default {
   data() {
     return {
       host: 'http://localhost:3000',
-      terminals: []
+      terminals: [],
+      response: null
     }
   },
   mounted() {
@@ -57,8 +62,13 @@ export default {
     editTerminal(terminal) {
       this.$router.push({ path: 'edit/' + terminal.imei });
     },
-    removeTerminal(index) {
-      this.terminals.splice(index, 1);
+    removeTerminal(terminal) {
+      axios.delete(this.host + '/api/' + terminal.imei)
+        .then(response => {
+          this.loadTerminals();
+          this.response = response;
+          window.console.log(response);
+        });
     },
     loadTerminals() {
       axios.get(this.host + '/api/')
@@ -76,6 +86,7 @@ export default {
     sendCommand(terminal) {
       axios.put(this.host + '/api/command/' + terminal.imei, { command: terminal.command })
         .then(response => {
+          this.response = response;
           window.console.log(response);
         });
     }
@@ -103,5 +114,9 @@ input {
 
 .command {
   display: flex;
+}
+
+.response {
+  font-family: 'Courier New', Courier, monospace;
 }
 </style>

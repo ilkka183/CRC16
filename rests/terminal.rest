@@ -7,7 +7,7 @@ content-type: application/json
 
 {
   "imei": "123456789123456",
-  "phone": "05061698"
+  "phoneNumber": "05061698"
 }
 ###
 PUT http://localhost:3000/api/123456789012345
