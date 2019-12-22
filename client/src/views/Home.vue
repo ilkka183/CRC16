@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1>Terminals</h1>
-    <p><span>REST API:</span><code>{{host}}</code></p>
+    <p>REST API on {{host}}</p>
     <button @click="addTerminal()">Add</button>
     <table class="grid">
       <tr>
@@ -12,19 +12,21 @@
         <th>Speed</th>
         <th>Enabled</th>
         <th>IP address</th>
+        <th>Login time</th>
         <th>Serial number</th>
         <th>Command</th>
         <th></th>
         <th></th>
       </tr>
       <tr v-for="(terminal, index) in terminals" :key="index">
-        <td>{{terminal.imei}}</td>
-        <td>{{terminal.phoneNumber}}</td>
+        <td class="code">{{terminal.imei}}</td>
+        <td class="code">{{terminal.phoneNumber}}</td>
         <td>{{terminal.lat}}</td>
         <td>{{terminal.lng}}</td>
         <td>{{terminal.speed}}</td>
         <td>{{terminal.enabled}}</td>
-        <td>{{terminal.ipAddress}}</td>
+        <td class="code">{{terminal.ipAddress}}</td>
+        <td>{{terminal.loginTime}}</td>
         <td>{{terminal.serialNumber}}</td>
         <td>
           <div class="command">
@@ -46,9 +48,13 @@ import axios from 'axios';
 export default {
   data() {
     return {
-      host: 'http://localhost:3000',
       terminals: [],
       response: null
+    }
+  },
+  computed: {
+    host() {
+      return this.$store.state.host;
     }
   },
   mounted() {
@@ -63,12 +69,14 @@ export default {
       this.$router.push({ path: 'edit/' + terminal.imei });
     },
     removeTerminal(terminal) {
-      axios.delete(this.host + '/api/' + terminal.imei)
-        .then(response => {
-          this.loadTerminals();
-          this.response = response;
-          window.console.log(response);
-        });
+      if (confirm(`Remove terminal ${terminal.imei}`)) {
+        axios.delete(this.host + '/api/' + terminal.imei)
+          .then(response => {
+            this.loadTerminals();
+            this.response = response;
+            window.console.log(response);
+          });
+      }
     },
     loadTerminals() {
       axios.get(this.host + '/api/')
@@ -104,7 +112,7 @@ input {
   border: 1px solid silver;
 }
 
-.grid td {
+td.code {
   font-family: 'Courier New', Courier, monospace;
 }
 

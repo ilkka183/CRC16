@@ -7,6 +7,7 @@ class Terminal {
     this.lng = undefined;
     this.speed = undefined;
     this.ipAddress = undefined;
+    this.loginTime = undefined;
     this.serialNumber = undefined;
   }
 }
@@ -39,9 +40,13 @@ class Terminals {
 
   populate() {
     this.clear();
-    this.add(new Terminal('355951091347489', '+358 44 950 9899', true));
-    this.add(new Terminal('123456789012345', '+358 44 950 9900', false));
+    this.add(new Terminal('0355951091347489', '+358 44 950 9899', true));
+    this.add(new Terminal('1234567890123456', '+358 44 950 9900', true));
+    this.add(new Terminal('0123456789012345', '+358 44 950 0000', true));
   }
 }
 
-module.exports = { Terminal, Terminals };
+const terminals = new Terminals();
+
+
+module.exports = { terminals, Terminal };

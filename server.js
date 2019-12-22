@@ -1,7 +1,7 @@
 const net = require('net');
 const ConcoxLogger = require('./logger');
 const PacketParser = require('./lib/packetParser');
-const { Terminal, Terminals } = require('./terminals')
+const { terminals } = require('./terminals')
 const { Device } = require('./lib/concox');
 const { ServerHeartbeat } = require('./packets/heartbeat');
 const { ServerLocation } = require('./packets/location');
@@ -41,23 +41,35 @@ class ConcoxServer extends ConcoxLogger {
     this.sendPacket(connection, response);
   }
 
-  sendLoginResponse(connection) {
-    const time = new Date();
+  sendLoginResponse(connection, request) {
+    const imei = request.infoContent.imei;
+    const serialNumber = request.serialNumber;
 
-    const response = new ServerLogin();
+    const terminal = terminals.find(imei);
 
-    response.assign({
-      year: time.getFullYear() - 2000,
-      month: time.getMonth() + 1,
-      day: time.getDate(),
-      hour: time.getHours(),
-      min: time.getMinutes(),
-      second: time.getSeconds() },
-      []);
+    if (terminal) {
+      console.log('Login');
 
-    response.serialNumber = this.serialNumber;
+      const time = new Date();
 
-    this.sendPacket(connection, response);
+      const response = new ServerLogin();
+  
+      response.assign({
+        year: time.getFullYear() - 2000,
+        month: time.getMonth() + 1,
+        day: time.getDate(),
+        hour: time.getHours(),
+        min: time.getMinutes(),
+        second: time.getSeconds() },
+        []);
+  
+      response.serialNumber = this.serialNumber;
+  
+      this.sendPacket(connection, response);
+
+      terminal.loginTime = time;
+      terminal.serialNumber = serialNumber;
+    }
   }
 
   sendHeartbeatResponse(connection) {
@@ -90,7 +102,7 @@ class ConcoxServer extends ConcoxLogger {
     this.serialNumber = request.serialNumber;
 
     switch (request.protocolNumber) {
-      case 0x01: this.sendLoginResponse(connection); break;
+      case 0x01: this.sendLoginResponse(connection, request); break;
       case 0x23: this.sendHeartbeatResponse(connection); break;
       case 0x32: this.sendLocationResponse(connection); break;
       case 0x33: this.sendLocationResponse(connection); break;
@@ -129,9 +141,4 @@ class ConcoxServer extends ConcoxLogger {
   }
 }
 
-//module.exports = ConcoxServer;
-
-const tcpPort = 1234;
-const concox = new ConcoxServer();
-concox.detailLog = true;
-concox.start(tcpPort);
+module.exports = ConcoxServer;

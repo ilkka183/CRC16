@@ -16,11 +16,15 @@ import axios from 'axios';
 export default {
   data() {
     return {
-      host: 'http://localhost:3000',
       terminal: {
         imei: null,
         phoneNumber: null
       }
+    }
+  },
+  computed: {
+    host() {
+      return this.$store.state.host;
     }
   },
   methods: {

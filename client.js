@@ -9,14 +9,14 @@ const { TerminalLogin } = require('./packets/login');
 const HOST = 'localhost';
 
 
-class ConcoxTerminal extends ConcoxLogger {
-  constructor(imei, modelIdentificationCode, host = HOST, port = 1234) {
+class ConcoxClient extends ConcoxLogger {
+  constructor(imei, modelIdentificationCode) {
     super();
 
     this.imei = imei,
     this.modelIdentificationCode = modelIdentificationCode;
-    this.host = host;
-    this.port = port;
+    this.host = HOST;
+    this.port = 1234;
     this.connection = null;
     this.serialNumber = 0;
   }
@@ -91,13 +91,11 @@ SERVER,0,185.26.50.123,1234,0#
 const imei = '355951091347489';
 const modelIdentificationCode = [0x36, 0x08];
 
-//const host = '185.26.50.123';
-const host = 'localhost';
-
-const terminal = new ConcoxTerminal(imei, modelIdentificationCode, host);
-terminal.detailLog = true;
-//terminal.login(100, 1);
-//terminal.heartbeat();
-//terminal.command();
-//terminal.heartbeat();
-//terminal.informationTransmission();
+const client = new ConcoxClient(imei, modelIdentificationCode);
+//client.host = '185.26.50.123';
+client.detailLog = true;
+client.login(100, 1);
+//client.heartbeat();
+//client.command();
+//client.heartbeat();
+//client.informationTransmission();

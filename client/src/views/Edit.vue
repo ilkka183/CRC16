@@ -8,6 +8,7 @@
       <tr><td>Longitude:</td><td><input type="text" :size="10" v-model="terminal.lng"></td></tr>
       <tr><td>Speed:</td><td><input type="text" :size="10" v-model="terminal.speed"></td></tr>
       <tr><td>IP address:</td><td>{{terminal.speed}}</td></tr>
+      <tr><td>Login time:</td><td>{{terminal.loginTime}}</td></tr>
       <tr><td>Serial number:</td><td>{{terminal.serialNumber}}</td></tr>
       <tr><td></td><td><input type="checkbox" v-model="terminal.enabled">Enabled</td></tr>
     </table>
@@ -22,11 +23,13 @@ import axios from 'axios';
 export default {
   data() {
     return {
-      host: 'http://localhost:3000',
       terminal: null
     }
   },
   computed: {
+    host() {
+      return this.$store.state.host;
+    },
     imei() {
       return this.$route.params.imei;
     }

@@ -16,10 +16,6 @@ const routes = [
   {
     path: '/edit/:imei',
     component: () => import('../views/Edit.vue')
-  },
-  {
-    path: '/about',
-    component: () => import('../views/About.vue')
   }
 ]
 

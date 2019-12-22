@@ -1,10 +1,7 @@
 const express = require('express');
-const { Terminal, Terminals } = require('./terminals')
+const { terminals, Terminal } = require('./terminals')
 
 const router = express.Router();
-
-const terminals = new Terminals();
-terminals.populate();
 
 
 router.get('/', (req, res) => {
@@ -66,7 +63,7 @@ router.put('/command/:imei', (req, res) => {
 
   if (terminal != null) {
     res.send({ terminal, command });
-    console.log(`Command ${command} to ${imei}`);
+    console.log(`Command "${command}" to ${imei}`);
   } else
     terminalNotFound(res, imei);
 });
