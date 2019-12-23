@@ -1,4 +1,5 @@
 const net = require('net');
+const colors = require('colors');
 const ConcoxLogger = require('./logger');
 const PacketParser = require('./lib/packetParser');
 const { Device } = require('./lib/concox');
@@ -10,35 +11,82 @@ const HOST = 'localhost';
 
 
 class ConcoxClient extends ConcoxLogger {
-  constructor(imei, modelIdentificationCode) {
+  constructor(imei, modelIdentificationCode, timeZone) {
     super();
 
     this.imei = imei,
     this.modelIdentificationCode = modelIdentificationCode;
+    this.timeZone = timeZone;
     this.host = HOST;
     this.port = 1234;
     this.connection = null;
-    this.serialNumber = 0;
+    this.serialNumber = undefined;
   }
 
-  send(packet) {
+  writePacket(packet) {
     const data = packet.build();
     const buffer = Buffer.from(data);
 
+    this.logPacket(packet, data);
+    this.connection.write(buffer);
+  }
+
+  writeLoginPacket() {
+    this.serialNumber = 1;
+
+    const packet = new TerminalLogin();
+    packet.assign(this.imei, this.modelIdentificationCode, this.timeZone);
+    packet.serialNumber = this.serialNumber;
+
+    this.writePacket(packet);
+  }
+
+  writeHeartbeatPacket() {
+    this.serialNumber++;
+
+    const packet = new TerminalHeartbeat();
+    packet.assign(1, 402, 4, 1);
+    packet.serialNumber = this.serialNumber;
+
+    this.writePacket(packet);
+  }
+
+  writeInformationTransmissionPacket() {
+    this.serialNumber++;
+
+    const packet = new TerminalInformationTransmission();
+    packet.assign(1, 402, 4, 1);
+    packet.serialNumber = this.serialNumber;
+
+    this.writePacket(packet);
+  }
+
+  start() {
     this.connection = net.createConnection(this.port, this.host, () => {
-      console.log('Connection local address: ' + this.connection.localAddress + ':' + this.connection.localPort);
-      console.log('Connection remote address: ' + this.connection.remoteAddress + ':' + this.connection.remotePort);
-    
-      this.logPacket(packet, data);
-      this.connection.write(buffer);
+      console.log(colors.green('Connection local address: ' + this.connection.localAddress + ':' + this.connection.localPort));
+      console.log(colors.green('Connection remote address: ' + this.connection.remoteAddress + ':' + this.connection.remotePort));
+
+      this.writeLoginPacket();
     });
  
     this.connection.on('data', (buffer) => {
       const data = [...buffer];
       const packet = PacketParser.parse(data, Device.SERVER);
-
       this.logPacket(packet, data);
-      this.connection.end();
+
+      switch (packet.protocolNumber) {
+        case 0x01:
+          this.writeHeartbeatPacket();
+          break;
+
+        case 0x23:
+          if (this.serialNumber > 2)
+            this.connection.end();
+          else
+            this.writeHeartbeatPacket();
+
+          break;
+      }
     });
      
     this.connection.on('close', () => {
@@ -46,38 +94,8 @@ class ConcoxClient extends ConcoxLogger {
     });
      
     this.connection.on('error', (err) => {
-      console.error(err);
+      console.error(err.red);
     });
-  }
-
-  login(timeZone, serialNumber) {
-    this.serialNumber = serialNumber;
-
-    const packet = new TerminalLogin();
-    packet.assign(this.imei, this.modelIdentificationCode, timeZone);
-    packet.serialNumber = this.serialNumber;
-
-    this.send(packet);
-  }
-
-  heartbeat() {
-    this.serialNumber++;
-
-    const packet = new TerminalHeartbeat();
-    packet.assign(1, 402, 4, 1);
-    packet.serialNumber = this.serialNumber;
-
-    this.send(packet);
-  }
-
-  informationTransmission() {
-    this.serialNumber++;
-
-    const packet = new TerminalInformationTransmission();
-    packet.assign(1, 402, 4, 1);
-    packet.serialNumber = this.serialNumber;
-
-    this.send(packet);
   }
 }
 
@@ -90,12 +108,9 @@ SERVER,0,185.26.50.123,1234,0#
 
 const imei = '355951091347489';
 const modelIdentificationCode = [0x36, 0x08];
+const timeZone = 2;
 
-const client = new ConcoxClient(imei, modelIdentificationCode);
+const client = new ConcoxClient(imei, modelIdentificationCode, timeZone);
 //client.host = '185.26.50.123';
-client.detailLog = true;
-client.login(100, 1);
-//client.heartbeat();
-//client.command();
-//client.heartbeat();
-//client.informationTransmission();
+//client.detailLog = true;
+client.start();

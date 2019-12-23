@@ -1,3 +1,4 @@
+const colors = require('colors');
 const { Concox } = require('./lib/concox');
 
 
@@ -21,7 +22,7 @@ class ConcoxLogger {
     if (this.detailLog)
       console.log('');
 
-    console.log(text);
+    console.log(text.yellow);
   }
 
   logError(text, error) {

@@ -1,4 +1,5 @@
 const net = require('net');
+const colors = require('colors');
 const ConcoxLogger = require('./logger');
 const PacketParser = require('./lib/packetParser');
 const { terminals } = require('./terminals')
@@ -112,7 +113,7 @@ class ConcoxServer extends ConcoxLogger {
 
   start(port) {
     this.server = net.createServer(connection => {
-      console.log('Client connected from ' + connection.remoteAddress + ':' + connection.remotePort);
+      console.log(colors.green('Client connected from ' + connection.remoteAddress + ':' + connection.remotePort));
     
       connection.on('data', (buffer) => {
         const data = [...buffer];

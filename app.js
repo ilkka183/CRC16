@@ -14,7 +14,7 @@ terminals.populate();
 
 const tcpPort = 1234;
 const concox = new ConcoxServer();
-concox.detailLog = true;
+//concox.detailLog = true;
 concox.start(tcpPort);
 
 const restPort = 3000;
