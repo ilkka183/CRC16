@@ -55,7 +55,7 @@ class ConcoxClient extends ConcoxLogger {
     this.serialNumber++;
 
     const packet = new TerminalInformationTransmission();
-    packet.assign(1, 402, 4, 1);
+    packet.assign([]);
     packet.serialNumber = this.serialNumber;
 
     this.writePacket(packet);
@@ -63,8 +63,7 @@ class ConcoxClient extends ConcoxLogger {
 
   start() {
     this.connection = net.createConnection(this.port, this.host, () => {
-      console.log(colors.green('Connection local address: ' + this.connection.localAddress + ':' + this.connection.localPort));
-      console.log(colors.green('Connection remote address: ' + this.connection.remoteAddress + ':' + this.connection.remotePort));
+      console.log(colors.green('Terminal connected to server ' + this.connection.remoteAddress + ':' + this.connection.remotePort));
 
       this.writeLoginPacket();
     });
@@ -76,21 +75,25 @@ class ConcoxClient extends ConcoxLogger {
 
       switch (packet.protocolNumber) {
         case 0x01:
-          this.writeHeartbeatPacket();
+          this.writeInformationTransmissionPacket();
           break;
 
         case 0x23:
-          if (this.serialNumber > 2)
+          if (this.serialNumber >= 5)
             this.connection.end();
           else
             this.writeHeartbeatPacket();
 
           break;
+
+        case 0x98:
+          this.writeHeartbeatPacket();
+          break;
       }
     });
      
     this.connection.on('close', () => {
-      this.logAction('Client disconnected');
+      this.logAction('Terminal disconnected');
     });
      
     this.connection.on('error', (err) => {

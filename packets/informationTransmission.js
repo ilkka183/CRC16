@@ -9,6 +9,11 @@ class InformationTransmissionPacket extends Packet {
 
 
 class TerminalInformationTransmission extends InformationTransmissionPacket {
+  constructor() {
+    super();
+    this.modules = [];
+  }
+  
   getTitle() {
     return 'Information transmission (terminal request)';
   }
