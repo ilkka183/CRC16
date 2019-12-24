@@ -79,8 +79,9 @@ class ConcoxClient extends ConcoxLogger {
           break;
 
         case 0x23:
-          if (this.serialNumber >= 5)
-            this.connection.end();
+          if (this.serialNumber >= 5) {
+//            this.connection.end();
+          }
           else
             this.writeHeartbeatPacket();
 

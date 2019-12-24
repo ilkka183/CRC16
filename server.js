@@ -68,6 +68,9 @@ class ConcoxServer extends ConcoxLogger {
   
       this.sendPacket(connection, response);
 
+      terminal.connection = connection;
+      terminal.remoteAddress = connection.remoteAddress;
+      terminal.remotePort = connection.remotePort;
       terminal.loginTime = time;
       terminal.serialNumber = serialNumber;
     }
@@ -79,8 +82,6 @@ class ConcoxServer extends ConcoxLogger {
     response.serialNumber = this.serialNumber;
 
     this.sendPacket(connection, response);
-  
-//    this.sendCommand(connection, 'UNLOCK#');
   }
 
   sendLocationResponse(connection) {
@@ -101,6 +102,15 @@ class ConcoxServer extends ConcoxLogger {
 
   processRequest(connection, request) {
     this.serialNumber = request.serialNumber;
+
+    const terminal = terminals.findByConnection(connection);
+
+    if (terminal) {
+      const time = new Date();
+
+      terminal.lastTime = time;
+      terminal.serialNumber = this.serialNumber;
+    }
 
     switch (request.protocolNumber) {
       case 0x01: this.sendLoginResponse(connection, request); break;
@@ -128,6 +138,16 @@ class ConcoxServer extends ConcoxLogger {
       });
     
       connection.on('end', () => {
+        const terminal = terminals.findByConnection(connection);
+
+        if (terminal) {
+          terminal.connection = null;
+          terminal.remoteAddress = null;
+          terminal.remotePort = null;
+          terminal.loginTime = null;
+          terminal.serialNumber = null;
+        }
+
         this.logAction('Client disconnected');
       });
     

@@ -11,8 +11,11 @@
         <th>Longitude</th>
         <th>Speed</th>
         <th>Enabled</th>
-        <th>IP address</th>
+        <th>Connected</th>
+        <th>Remote address</th>
+        <th>Remote port</th>
         <th>Login time</th>
+        <th>Last time</th>
         <th>Serial number</th>
         <th>Command</th>
         <th></th>
@@ -25,8 +28,11 @@
         <td>{{terminal.lng}}</td>
         <td>{{terminal.speed}}</td>
         <td>{{terminal.enabled}}</td>
-        <td class="code">{{terminal.ipAddress}}</td>
+        <td>{{terminal.connection != null}}</td>
+        <td class="code">{{terminal.remoteAddress}}</td>
+        <td class="code">{{terminal.remotePort}}</td>
         <td>{{terminal.loginTime}}</td>
+        <td>{{terminal.lastTime}}</td>
         <td>{{terminal.serialNumber}}</td>
         <td>
           <div class="command">

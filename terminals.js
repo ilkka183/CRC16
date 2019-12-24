@@ -6,9 +6,13 @@ class Terminal {
     this.lat = undefined;
     this.lng = undefined;
     this.speed = undefined;
-    this.ipAddress = undefined;
-    this.loginTime = undefined;
-    this.serialNumber = undefined;
+
+    this.connection = null;
+    this.remoteAddress = null;
+    this.remotePort = null;
+    this.loginTime = null;
+    this.lastTime = null;
+    this.serialNumber = null;
   }
 }
 
@@ -20,6 +24,10 @@ class Terminals {
 
   find(imei) {
     return this.items.find(item => item.imei == imei);
+  }
+
+  findByConnection(connection) {
+    return this.items.find(item => item.connection == connection);
   }
 
   findIndex(imei) {
