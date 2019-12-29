@@ -45,13 +45,18 @@
       </tr>
     </table>
     <div class="response"><pre>{{response}}</pre></div>
+    <Terminal />
   </div>
 </template>
 
 <script>
 import axios from 'axios';
+import Terminal from './Terminal.vue';
 
 export default {
+  components: {
+    Terminal
+  },
   data() {
     return {
       terminals: [],
@@ -128,6 +133,16 @@ td.code {
 
 .command {
   display: flex;
+}
+
+.response {
+  font-family: 'Courier New', Courier, monospace;
+  width: 800px;
+}
+
+.buttons {
+  display: flex;
+  flex-direction: column;
 }
 
 .response {

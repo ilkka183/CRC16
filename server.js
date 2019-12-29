@@ -110,6 +110,7 @@ class ConcoxServer extends ConcoxLogger {
 
       terminal.lastTime = time;
       terminal.serialNumber = this.serialNumber;
+      console.log(terminal.connection.remoteAddress);
     }
 
     switch (request.protocolNumber) {
