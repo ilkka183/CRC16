@@ -1,7 +1,7 @@
+const ConcoxServer = require('./server')
 const cors = require('cors')
 const express = require('express')
 const routes = require('./routes')
-const ConcoxServer = require('./server')
 const { terminals } = require('./terminals')
 
 const app = express()
@@ -10,7 +10,11 @@ app.use(cors());
 app.use(express.json());
 app.use('/api', routes);
 
-terminals.populate();
+terminals.load();
+
+setInterval(() => {
+  terminals.update();
+}, 60000);
 
 const tcpPort = 1234;
 const concox = new ConcoxServer();

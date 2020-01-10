@@ -45,17 +45,14 @@
       </tr>
     </table>
     <div class="response"><pre>{{response}}</pre></div>
-    <Terminal />
   </div>
 </template>
 
 <script>
 import axios from 'axios';
-import Terminal from './Terminal.vue';
 
 export default {
   components: {
-    Terminal
   },
   data() {
     return {

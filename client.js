@@ -5,6 +5,7 @@ const PacketParser = require('./lib/packetParser');
 const { Device } = require('./lib/concox');
 const { TerminalInformationTransmission } = require('./packets/informationTransmission');
 const { TerminalHeartbeat } = require('./packets/heartbeat');
+const { TerminalLocation } = require('./packets/location');
 const { TerminalLogin } = require('./packets/login');
 
 const HOST = 'localhost';
@@ -51,6 +52,16 @@ class ConcoxClient extends ConcoxLogger {
     this.writePacket(packet);
   }
 
+  writeLocationPacket() {
+    this.serialNumber++;
+
+    const packet = new TerminalLocation();
+    packet.assign(new Date(), 60.2, 27.15, 10);
+    packet.serialNumber = this.serialNumber;
+
+    this.writePacket(packet);
+  }
+
   writeInformationTransmissionPacket() {
     this.serialNumber++;
 
@@ -79,18 +90,25 @@ class ConcoxClient extends ConcoxLogger {
           break;
 
         case 0x23:
-          if (this.serialNumber >= 5) {
-//            this.connection.end();
+          if (this.serialNumber >= 7) {
+            this.connection.end();
           }
-          else
-            this.writeHeartbeatPacket();
+          else {
+            setTimeout(() => {
+              this.writeHeartbeatPacket();
+            }, 2000);
+          }
 
+          break;
+
+        case 0x32:
+          this.writeHeartbeatPacket();
           break;
 
         case 0x98:
-          this.writeHeartbeatPacket();
+          this.writeLocationPacket();
           break;
-      }
+        }
     });
      
     this.connection.on('close', () => {
@@ -104,10 +122,8 @@ class ConcoxClient extends ConcoxLogger {
 }
 
 /*
-
 SERVER,0,185.26.50.123,1234,0#
 044 950 9899
-
 */
 
 const imei = '355951091347489';

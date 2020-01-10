@@ -46,24 +46,14 @@ class ConcoxServer extends ConcoxLogger {
     const imei = request.infoContent.imei;
     const serialNumber = request.serialNumber;
 
-    const terminal = terminals.find(imei);
+    const terminal = terminals.findByImei(imei);
 
     if (terminal) {
-      console.log('Login');
-
-      const time = new Date();
+      const now = new Date();
 
       const response = new ServerLogin();
   
-      response.assign({
-        year: time.getFullYear() - 2000,
-        month: time.getMonth() + 1,
-        day: time.getDate(),
-        hour: time.getHours(),
-        min: time.getMinutes(),
-        second: time.getSeconds() },
-        []);
-  
+      response.assign(now, []);
       response.serialNumber = this.serialNumber;
   
       this.sendPacket(connection, response);
@@ -71,33 +61,55 @@ class ConcoxServer extends ConcoxLogger {
       terminal.connection = connection;
       terminal.remoteAddress = connection.remoteAddress;
       terminal.remotePort = connection.remotePort;
-      terminal.loginTime = time;
+      terminal.loginTime = now;
       terminal.serialNumber = serialNumber;
+
+      terminal.saveLogin();
+    } else {
+      this.logError(`IMEI ${imei} not found`);
     }
   }
 
-  sendHeartbeatResponse(connection) {
+  sendHeartbeatResponse(connection, terminal) {
     let response = new ServerHeartbeat();
     response.assign();
     response.serialNumber = this.serialNumber;
 
     this.sendPacket(connection, response);
+
+    if (terminal)
+      terminal.savePacket();
   }
 
-  sendLocationResponse(connection) {
+  sendLocationResponse(connection, terminal, request) {
     let response = new ServerLocation();
     response.assign();
     response.serialNumber = this.serialNumber;
 
     this.sendPacket(connection, response);
+
+    if (terminal) {
+      if (request.infoContent.gpsInformation) {
+        terminal.latitude = request.infoContent.gpsInformation.latitude/1800000;
+        terminal.longitude = request.infoContent.gpsInformation.longitude/1800000;
+        terminal.speed = request.infoContent.gpsInformation.speed;
+  
+        terminal.saveLocation();
+      } else {
+        terminal.savePacket();
+      }
+    }
   }
 
-  sendInformationTransmissionResponse(connection) {
+  sendInformationTransmissionResponse(connection, terminal) {
     const response = new ServerInformationTransmission();
     response.assign([]);
     response.serialNumber = this.serialNumber;
 
     this.sendPacket(connection, response);
+
+    if (terminal)
+      terminal.savePacket();
   }
 
   processRequest(connection, request) {
@@ -110,19 +122,18 @@ class ConcoxServer extends ConcoxLogger {
 
       terminal.lastTime = time;
       terminal.serialNumber = this.serialNumber;
-      console.log(terminal.connection.remoteAddress);
     }
 
     switch (request.protocolNumber) {
       case 0x01: this.sendLoginResponse(connection, request); break;
-      case 0x23: this.sendHeartbeatResponse(connection); break;
-      case 0x32: this.sendLocationResponse(connection); break;
-      case 0x33: this.sendLocationResponse(connection); break;
-      case 0x98: this.sendInformationTransmissionResponse(connection); break;
+      case 0x23: this.sendHeartbeatResponse(connection, terminal); break;
+      case 0x32: this.sendLocationResponse(connection, terminal, request); break;
+      case 0x33: this.sendLocationResponse(connection, terminal); break;
+      case 0x98: this.sendInformationTransmissionResponse(connection, terminal); break;
     }
   }
 
-  start(port) {
+  async start(port) {
     this.server = net.createServer(connection => {
       console.log(colors.green('Client connected from ' + connection.remoteAddress + ':' + connection.remotePort));
     
@@ -149,6 +160,7 @@ class ConcoxServer extends ConcoxLogger {
           terminal.serialNumber = null;
         }
 
+        console.log(terminals);
         this.logAction('Client disconnected');
       });
     

@@ -1,4 +1,5 @@
 const Packet = require('../lib/packet');
+const { Concox } = require('../lib/concox');
 
 
 class LoginPacket extends Packet {
@@ -109,8 +110,8 @@ class ServerLogin extends LoginPacket {
     return 'Login packet (server response)';
   }
 
-  assign(dateTime, reservedExtensionBit) {
-    this.dateTime = dateTime;
+  assign(date, reservedExtensionBit) {
+    this.dateTime = Concox.dateToObject(date);
     this.reservedExtensionBitLength = reservedExtensionBit.length;
     this.reservedExtensionBit = reservedExtensionBit;
   }

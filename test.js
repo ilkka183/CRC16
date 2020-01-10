@@ -60,11 +60,23 @@ function testHeartbeat() {
 
 function testLocation() {
 //  parse('79 79 00 6F 33 11 03 14 09 06 08 00 09 01 CC 00 28 7D 00 1F 40 0E 24 28 7D 00 1F 71 07 28 7D 00 1E 3F 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 31 00 36 76 05 BB 5D 46 00 87 36 31 87 5B 48 CC 7B 35 36 61 A6 4C 00 E0 4B 8C BF 58 4F 78 A1 06 54 15 DE 4F 00 87 46 1B 9D 84 51 26 52 F3 AD B1 94 55 A1 00 00 08 38 B2 0D 0A', Device.TERMINAL);
-  parse('79 79 00 4A 32 13 0C 10 0C 38 19 0C C5 05 11 FC 00 04 3F A2 50 00 14 62 09 00 FA 01 00 0A 00 17 08 21 24 00 0A 00 5B 4C 2E 00 11 00 5B 42 24 00 0A 00 2C E3 1F 00 0A 00 17 05 1B 00 0A 00 5B 4D 1B 00 11 00 5B 43 1B 00 0F 00 00 06 6D 04 0D 0A', Device.TERMINAL);
+//  parse('79 79 00 4A 32 13 0C 10 0C 38 19 0C C5 05 11 FC 00 04 3F A2 50 00 14 62 09 00 FA 01 00 0A 00 17 08 21 24 00 0A 00 5B 4C 2E 00 11 00 5B 42 24 00 0A 00 2C E3 1F 00 0A 00 17 05 1B 00 0A 00 5B 4D 1B 00 11 00 5B 43 1B 00 0F 00 00 06 6D 04 0D 0A', Device.TERMINAL);
 
+  let packet = new TerminalLocation();
+  packet.assign(new Date(), 60.2, 27.1, 10);
+  packet.serialNumber = 5;
+
+  const data = packet.build();
+  const hex = Concox.toHex(data);
+  console.log(hex)
+
+  parse(hex, Device.TERMINAL);
+  
+/*  
   packet = new ServerLocation();
   packet.serialNumber = 8;
   compare(packet, '79 79 00 05 33 00 08 44 A2 0D 0A', Device.SERVER);
+*/
 }
 
 function testWifiInformation() {
@@ -172,7 +184,7 @@ function parseExample() {
 
 //testLogin();
 //testHeartbeat();
-//testLocation();
+testLocation();
 //testWifiInformation();
 //testOnlineCommand();
 //testInformationTransmission();

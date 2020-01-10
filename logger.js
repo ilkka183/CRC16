@@ -26,7 +26,7 @@ class ConcoxLogger {
   }
 
   logError(text, error) {
-    console.log(text, error);
+    console.log(text.red, error);
   }
 }
 
