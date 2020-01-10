@@ -6,13 +6,20 @@ const router = express.Router();
 
 router.get('/', (req, res) => {
   console.log(`Get ${terminals.items.length} terminals`);
-  res.send(terminals.items);
+
+  const items = [];
+
+  for (const terminal of terminals.items)
+    items.push(terminal.getObject());
+
+  res.send(items);
 });
 
-router.get('/:imei', (req, res) => {
-  const terminal = terminals.find(req.params.imei);
-  console.log(`Get terminal ${JSON.stringify(terminal)}`);
-  res.send(terminal);
+router.get('/:number', (req, res) => {
+  const terminal = terminals.findByNumber(req.params.number);
+  const item = terminal.getObject();
+  console.log(`Get terminal ${JSON.stringify(item)}`);
+  res.send(item);
 });
 
 router.post('/', (req, res) => {
@@ -29,7 +36,7 @@ router.post('/', (req, res) => {
     sendResponseText(res, 400, `Terminal ${imei} already exists`);
 });
 
-router.put('/:imei', (req, res) => {
+router.put('/:number', (req, res) => {
   function updateField(terminal, name, required) {
     if (req.body[name] !== undefined) {
       if (req.body[name] || required)
@@ -39,8 +46,8 @@ router.put('/:imei', (req, res) => {
     }
   }
 
-  const imei = req.params.imei;
-  const terminal = terminals.find(imei);
+  const number = req.params.number;
+  const terminal = terminals.findByNumber(number);
 
   if (terminal != null) {
     updateField(terminal, 'phoneNumber', true);
@@ -50,39 +57,39 @@ router.put('/:imei', (req, res) => {
     updateField(terminal, 'enabled', true);
 
     res.send(terminal);
-    console.log(`Update terminal ${imei} to ${JSON.stringify(req.body)}`);
+    console.log(`Update terminal ${number} to ${JSON.stringify(req.body)}`);
   } else
-    terminalNotFound(res, imei);
+    terminalNotFound(res, number);
 });
 
-router.put('/command/:imei', (req, res) => {
-  const imei = req.params.imei;
+router.put('/command/:number', (req, res) => {
+  const number = req.params.number;
   const command = req.body.command;
 
-  const terminal = terminals.find(imei);
+  const terminal = terminals.findByNumber(number);
 
   if (terminal != null) {
     res.send({ terminal, command });
-    console.log(`Command "${command}" to ${imei}`);
+    console.log(`Command "${command}" to ${number}`);
   } else
-    terminalNotFound(res, imei);
+    terminalNotFound(res, number);
 });
 
-router.delete('/:imei', (req, res) => {
-  const imei = req.params.imei;
-  const index = terminals.findIndex(imei);
+router.delete('/:number', (req, res) => {
+  const number = req.params.number;
+  const index = terminals.findIndexByNumber(number);
 
   if (index != -1) {
     terminals.removeAt(index);
 
-    res.send({ imei, index });
-    console.log(`Delete terminal ${imei}`);
+    res.send({ number, index });
+    console.log(`Delete terminal ${number}`);
   } else
-    terminalNotFound(res, imei);
+    terminalNotFound(res, number);
 });
 
-function terminalNotFound(res, imei) {
-  sendResponseText(res, 404, `Terminal ${imei} not found`);
+function terminalNotFound(res, number) {
+  sendResponseText(res, 404, `Terminal ${number} not found`);
 }
 
 function sendResponseText(res, status, text) {

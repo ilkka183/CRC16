@@ -1,6 +1,6 @@
 GET http://localhost:3000/api/
 ###
-GET http://localhost:3000/api/123456789012345
+GET http://localhost:3000/api/1001
 ###
 POST http://localhost:3000/api/
 content-type: application/json
@@ -10,7 +10,7 @@ content-type: application/json
   "phoneNumber": "05061698"
 }
 ###
-PUT http://localhost:3000/api/123456789012345
+PUT http://localhost:3000/api/1001
 content-type: application/json
 
 {
@@ -19,11 +19,11 @@ content-type: application/json
   "speed": 10.2
 }
 ###
-PUT http://localhost:3000/api/command/123456789012345
+PUT http://localhost:3000/api/command/1001
 content-type: application/json
 
 {
   "command": "UNLOCK#"
 }
 ###
-DELETE http://localhost:3000/api/123456789012345
+DELETE http://localhost:3000/api/1001

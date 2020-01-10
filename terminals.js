@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const REST_HOST = 'http://localhost:59893/wp-json/juro/v1';
+const REST_HOST = 'http://localhost:49452/wp-json/juro/v1';
 
 
 class Terminal {
@@ -22,6 +22,21 @@ class Terminal {
     this.speed = undefined;
   }
 
+  getObject() {
+    return {
+      number: this.number,
+      imei: this.imei,
+      phoneNumber: this.phoneNumber,
+      enabled: this.enabled,
+      connected: this.connection != null,
+      latitude: this.latitude,
+      longitude: this.longitude,
+      speed: this.speed,
+    }
+  }
+ 
+
+/*  
   saveLogin() {
     axios.put(REST_HOST + '/login', {
       number: this.number,
@@ -59,6 +74,7 @@ class Terminal {
       console.log('Location', response.data);
     });
   }
+*/
 }
 
 
@@ -79,7 +95,11 @@ class Terminals {
     return this.items.find(item => item.connection == connection);
   }
 
-  findIndex(imei) {
+  findIndexByNumber(number) {
+    return this.items.findIndex(item => item.number == number);
+  }
+
+  findIndexByImei(imei) {
     return this.items.findIndex(item => item.imei == imei);
   }
 
@@ -122,6 +142,8 @@ class Terminals {
   }
 
   async update() {
+    return;
+
     const response = await axios.get(REST_HOST + '/bicycles');
     const items = response.data;
 

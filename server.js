@@ -44,7 +44,6 @@ class ConcoxServer extends ConcoxLogger {
 
   sendLoginResponse(connection, request) {
     const imei = request.infoContent.imei;
-    const serialNumber = request.serialNumber;
 
     const terminal = terminals.findByImei(imei);
 
@@ -62,9 +61,7 @@ class ConcoxServer extends ConcoxLogger {
       terminal.remoteAddress = connection.remoteAddress;
       terminal.remotePort = connection.remotePort;
       terminal.loginTime = now;
-      terminal.serialNumber = serialNumber;
-
-      terminal.saveLogin();
+      terminal.serialNumber = this.serialNumber;
     } else {
       this.logError(`IMEI ${imei} not found`);
     }
@@ -76,9 +73,6 @@ class ConcoxServer extends ConcoxLogger {
     response.serialNumber = this.serialNumber;
 
     this.sendPacket(connection, response);
-
-    if (terminal)
-      terminal.savePacket();
   }
 
   sendLocationResponse(connection, terminal, request) {
@@ -88,16 +82,10 @@ class ConcoxServer extends ConcoxLogger {
 
     this.sendPacket(connection, response);
 
-    if (terminal) {
-      if (request.infoContent.gpsInformation) {
-        terminal.latitude = request.infoContent.gpsInformation.latitude/1800000;
-        terminal.longitude = request.infoContent.gpsInformation.longitude/1800000;
-        terminal.speed = request.infoContent.gpsInformation.speed;
-  
-        terminal.saveLocation();
-      } else {
-        terminal.savePacket();
-      }
+    if (request.infoContent.gpsInformation) {
+      terminal.latitude = request.infoContent.gpsInformation.latitude/1800000;
+      terminal.longitude = request.infoContent.gpsInformation.longitude/1800000;
+      terminal.speed = request.infoContent.gpsInformation.speed;
     }
   }
 
@@ -107,9 +95,6 @@ class ConcoxServer extends ConcoxLogger {
     response.serialNumber = this.serialNumber;
 
     this.sendPacket(connection, response);
-
-    if (terminal)
-      terminal.savePacket();
   }
 
   processRequest(connection, request) {

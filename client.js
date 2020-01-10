@@ -126,7 +126,7 @@ SERVER,0,185.26.50.123,1234,0#
 044 950 9899
 */
 
-const imei = '355951091347489';
+const imei = '0355951091347489';
 const modelIdentificationCode = [0x36, 0x08];
 const timeZone = 2;
 
