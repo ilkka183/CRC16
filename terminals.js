@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const REST_HOST = 'http://localhost:49452/wp-json/juro/v1';
+const REST_HOST = 'http://localhost:49511/wp-json/juro/v1';
 
 
 class Terminal {
@@ -10,16 +10,26 @@ class Terminal {
     this.phoneNumber = phoneNumber;
     this.enabled = enabled;
 
+    this.server = null;
     this.connection = null;
-    this.remoteAddress = null;
-    this.remotePort = null;
-    this.loginTime = null;
-    this.lastTime = null;
-    this.serialNumber = null;
+    this.address = undefined;
+    this.port = undefined;
+    this.loginTime = undefined;
+    this.serialTime = undefined;
+    this.serialNumber = undefined;
 
     this.latitude = undefined;
     this.longitude = undefined;
     this.speed = undefined;
+  }
+
+  disconnect() {
+    this.server = null;
+    this.connection = null;
+    this.address = undefined;
+    this.port = undefined;
+    this.loginTime = undefined;
+    this.serialNumber = undefined;
   }
 
   getObject() {
@@ -29,38 +39,21 @@ class Terminal {
       phoneNumber: this.phoneNumber,
       enabled: this.enabled,
       connected: this.connection != null,
+      loginTime: this.loginTime,
+      serialTime: this.serialTime,
+      serialNumber: this.serialNumber,
       latitude: this.latitude,
       longitude: this.longitude,
       speed: this.speed,
     }
   }
+
+  sendCommand(command) {
+    if (this.server) {
+      this.server.sendCommand(this, command);
+    }
+  }
  
-
-/*  
-  saveLogin() {
-    axios.put(REST_HOST + '/login', {
-      number: this.number,
-      address: this.remoteAddress,
-      port: this.remotePort,
-      loginTime: this.loginTime,
-      serialNumber: this.serialNumber
-    })
-    .then(response => {
-      console.log('Login', response.data);
-    });
-  }
-
-  savePacket() {
-    axios.put(REST_HOST + '/packet', {
-      number: this.number,
-      lastTime: this.lastTime,
-      serialNumber: this.serialNumber
-    })
-    .then(response => {
-      console.log('Packet', response.data);
-    });
-  }
-
   saveLocation() {
     axios.put(REST_HOST + '/location', {
       number: this.number,
@@ -74,7 +67,6 @@ class Terminal {
       console.log('Location', response.data);
     });
   }
-*/
 }
 
 
@@ -117,18 +109,22 @@ class Terminals {
 
   populate() {
     this.clear();
-    this.add(new Terminal('0355951091347489', '+358 44 950 9899', true));
-    this.add(new Terminal('1234567890123456', '+358 44 950 9900', true));
-    this.add(new Terminal('0123456789012345', '+358 44 950 0000', true));
+    this.add(new Terminal('1001', '0355951091347489', '+358 44 950 9899', true));
+    this.add(new Terminal('1002', '1234567890123456', '+358 44 950 9900', true));
+    this.add(new Terminal('1003', '0123456789012345', '+358 44 950 0000', true));
   }
 
   addItem(item) {
     this.add(new Terminal(item.number, item.imei, item.phoneNumber, item.enabled));
   }
 
-  async load() {
+  async getBicycles() {
     const response = await axios.get(REST_HOST + '/bicycles');
-    const items = response.data;
+    return response.data;
+  }
+
+  async load() {
+    const items = await this.getBicycles();
     const numbers = [];
 
     this.clear();
@@ -142,10 +138,7 @@ class Terminals {
   }
 
   async update() {
-    return;
-
-    const response = await axios.get(REST_HOST + '/bicycles');
-    const items = response.data;
+    const items = await this.getBicycles();
 
     // Remove old terminals
     const oldNumbers = [];
@@ -182,8 +175,17 @@ class Terminals {
       console.log('Terminals added:', addedNumbers);
     }
   }
+
+  async initialize(intervalInMinutes) {
+    await terminals.load();
+    console.log(`Terminals updated every ${intervalInMinutes} minutes`);
+
+    setInterval(() => {
+      terminals.update();
+    }, intervalInMinutes*60*1000);
+  }
 }
 
 const terminals = new Terminals();
 
-module.exports = { Terminals, terminals };
+module.exports = { Terminal, Terminals, terminals };

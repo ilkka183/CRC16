@@ -6,16 +6,17 @@ POST http://localhost:3000/api/
 content-type: application/json
 
 {
+  "number": "1010",
   "imei": "123456789123456",
   "phoneNumber": "05061698"
 }
 ###
-PUT http://localhost:3000/api/1001
+PUT http://localhost:3000/api/1010
 content-type: application/json
 
 {
-  "lat": 65.0,
-  "lng": 25.0,
+  "latitude": 65.0,
+  "longitude": 25.0,
   "speed": 10.2
 }
 ###
@@ -26,4 +27,4 @@ content-type: application/json
   "command": "UNLOCK#"
 }
 ###
-DELETE http://localhost:3000/api/1001
+DELETE http://localhost:3000/api/1010

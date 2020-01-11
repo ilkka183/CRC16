@@ -23,17 +23,19 @@ router.get('/:number', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  const imei = req.body.imei;
+  const number = req.body.number;
 
-  if (!terminals.find(imei)) {
-    const terminal = new Terminal(imei, req.body.phoneNumber, true);
+  if (!terminals.findByNumber(number)) {
+    const terminal = new Terminal(number, req.body.imei, req.body.phoneNumber, true);
     terminals.add(terminal);
   
+    const item = terminal.getObject();
+
     res.status(201);
-    res.send(terminal);
-    console.log(`Add terminal ${JSON.stringify(terminal)}`);
+    res.send(item);
+    console.log(`Add terminal ${JSON.stringify(item)}`);
   } else
-    sendResponseText(res, 400, `Terminal ${imei} already exists`);
+    sendResponseText(res, 400, `Terminal ${number} already exists`);
 });
 
 router.put('/:number', (req, res) => {
@@ -51,12 +53,14 @@ router.put('/:number', (req, res) => {
 
   if (terminal != null) {
     updateField(terminal, 'phoneNumber', true);
-    updateField(terminal, 'lat');
-    updateField(terminal, 'lng');
+    updateField(terminal, 'latitude');
+    updateField(terminal, 'longitude');
     updateField(terminal, 'speed');
     updateField(terminal, 'enabled', true);
 
-    res.send(terminal);
+    const item = terminal.getObject();
+
+    res.send(item);
     console.log(`Update terminal ${number} to ${JSON.stringify(req.body)}`);
   } else
     terminalNotFound(res, number);
@@ -69,8 +73,16 @@ router.put('/command/:number', (req, res) => {
   const terminal = terminals.findByNumber(number);
 
   if (terminal != null) {
-    res.send({ terminal, command });
-    console.log(`Command "${command}" to ${number}`);
+    terminal.sendCommand(command);
+
+    const item = terminal.getObject();
+
+    res.send({
+      terminal: item,
+      command
+    });
+
+    console.log(`Command "${command}" to terminal ${number}`);
   } else
     terminalNotFound(res, number);
 });
@@ -82,7 +94,11 @@ router.delete('/:number', (req, res) => {
   if (index != -1) {
     terminals.removeAt(index);
 
-    res.send({ number, index });
+    res.send({
+      number,
+      index
+    });
+
     console.log(`Delete terminal ${number}`);
   } else
     terminalNotFound(res, number);

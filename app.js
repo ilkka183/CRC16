@@ -1,25 +1,25 @@
-const ConcoxServer = require('./server')
 const cors = require('cors')
 const express = require('express')
 const routes = require('./routes')
+const ConcoxServer = require('./server')
 const { terminals } = require('./terminals')
 
-const app = express()
+const DEFAULT_TCP_PORT = 1234;
+const DEFAULT_REST_PORT = 3000;
+const DEFAULT_UPDATE_INTERVAL = 5; // in minutes
 
-app.use(cors());
-app.use(express.json());
-app.use('/api', routes);
+const tcpPort = DEFAULT_TCP_PORT;
+const restPort = DEFAULT_REST_PORT;
+const updateInterval = DEFAULT_UPDATE_INTERVAL;
 
-terminals.load();
+terminals.initialize(updateInterval);
 
-setInterval(() => {
-  terminals.update();
-}, 60000);
+const tcp = new ConcoxServer();
+tcp.detailLog = false;
+tcp.listen(tcpPort, () => console.log(`Juro TCP server listening on port ${tcpPort}...`));
 
-const tcpPort = 1234;
-const concox = new ConcoxServer();
-//concox.detailLog = true;
-concox.start(tcpPort);
-
-const restPort = 3000;
-app.listen(restPort, () => console.log(`Juro REST server listening on port ${restPort}...`));
+const rest = express()
+rest.use(cors());
+rest.use(express.json());
+rest.use('/api', routes);
+rest.listen(restPort, () => console.log(`Juro REST server listening on port ${restPort}...`));

@@ -90,8 +90,8 @@ class ConcoxClient extends ConcoxLogger {
           break;
 
         case 0x23:
-          if (this.serialNumber >= 7) {
-            this.connection.end();
+          if (this.serialNumber >= 17) {
+//            this.connection.end();
           }
           else {
             setTimeout(() => {
