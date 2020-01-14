@@ -17,7 +17,8 @@ terminals.initialize(updateInterval, true);
 
 // TCP server communicating with the terminals
 const tcp = new ConcoxServer();
-tcp.detailLog = true;
+tcp.detailLog = false;
+tcp.commandTimeoutDelay = 5000;
 tcp.listen(tcpPort, () => console.log(`Juro TCP server listening on port ${tcpPort}...`));
 
 // Rest server called by the application

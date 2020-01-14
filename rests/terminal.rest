@@ -27,4 +27,25 @@ content-type: application/json
   "command": "UNLOCK#"
 }
 ###
+PUT http://185.26.50.123:3000/api/command/7551040072
+content-type: application/json
+
+{
+  "command": "VERSION#"
+}
+###
+PUT http://185.26.50.123:3000/api/command/7551040072
+content-type: application/json
+
+{
+  "command": "STATUS#"
+}
+###
+PUT http://185.26.50.123:3000/api/command/7551040072
+content-type: application/json
+
+{
+  "command": "URL#"
+}
+###
 DELETE http://localhost:3000/api/1010

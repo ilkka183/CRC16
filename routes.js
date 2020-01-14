@@ -72,17 +72,30 @@ router.put('/command/:number', (req, res) => {
 
   const terminal = terminals.findByNumber(number);
 
-  if (terminal != null) {
-    terminal.sendCommand(command);
-
+  if ((terminal != null) && terminal.server) {
+    console.log(`Command "${command}" to terminal ${number}`);
     const item = terminal.getObject();
 
-    res.send({
-      terminal: item,
-      command
-    });
+    terminal.server.sendOnlineCommand(terminal, command)
+      .then(reply => {
+        res.send({
+          terminal: item,
+          command,
+          reply
+        });
 
-    console.log(`Command "${command}" to terminal ${number}`);
+        console.log(`Reply "${reply}" from terminal ${number}`);
+      })
+      .catch(error => {
+        res.status(501);
+
+        res.send({
+          terminal: item,
+          error
+        });
+
+        console.log(error);
+      });
   } else
     terminalNotFound(res, number);
 });

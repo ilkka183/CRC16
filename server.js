@@ -25,6 +25,7 @@ class ConcoxServer extends ConcoxLogger {
     super();
 
     this.server = null;
+    this.commandTimeoutDelay = 10000;
   }
 
   sendPacket(connection, packet) {
@@ -35,13 +36,30 @@ class ConcoxServer extends ConcoxLogger {
     connection.write(buffer);
   }
 
-  sendCommand(terminal, command) {
-    if (terminal.connection) {
-      const response = new ServerOnlineCommand();
-      response.assign(command);
-      response.serialNumber = terminal.serialNumber;
-  
-      this.sendPacket(terminal.connection, response);
+  sendOnlineCommand(terminal, command) {
+    return new Promise((resolve, reject) => {
+      if (terminal.connection) {
+        const response = new ServerOnlineCommand();
+        response.assign(command);
+        response.serialNumber = terminal.serialNumber;
+    
+        this.sendPacket(terminal.connection, response);
+
+        terminal.onlineCommandResolve = resolve;
+
+        const delay = 5000;
+
+        const timeout = setTimeout(() => {
+          clearTimeout(timeout);
+          reject(`Command "${command}" timed out in ${this.commandTimeoutDelay} ms.`)
+        }, this.commandTimeoutDelay);
+      }
+    });
+  }
+
+  handleOnlineCommandResponse(connection, packet, terminal) {
+    if (terminal.onlineCommandResolve) {
+      terminal.onlineCommandResolve(packet.infoContent.command);
     }
   }
 
@@ -71,7 +89,7 @@ class ConcoxServer extends ConcoxLogger {
 
   sendHeartbeatResponse(connection, request, terminal) {
     let response = new ServerHeartbeat();
-//    response.assign();
+    response.assign();
     response.serialNumber = request.serialNumber;
 
     this.sendPacket(connection, response);
@@ -111,8 +129,9 @@ class ConcoxServer extends ConcoxLogger {
 
     switch (request.protocolNumber) {
       case 0x01: this.sendLoginResponse(connection, request); break;
+      case 0x21: this.handleOnlineCommandResponse(connection, request, terminal); break;
       case 0x23: this.sendHeartbeatResponse(connection, request, terminal); break;
-      case 0x32: this.sendLocationResponse(connection, request, terminal, request); break;
+      case 0x32: this.sendLocationResponse(connection, request, terminal); break;
       case 0x33: this.sendLocationResponse(connection, request, terminal); break;
       case 0x98: this.sendInformationTransmissionResponse(connection, request, terminal); break;
     }

@@ -21,6 +21,7 @@ class Terminal {
     this.latitude = undefined;
     this.longitude = undefined;
     this.speed = undefined;
+    this.onlineCommandResolve = null;
   }
 
   disconnect() {
@@ -48,12 +49,6 @@ class Terminal {
     }
   }
 
-  sendCommand(command) {
-    if (this.server) {
-      this.server.sendCommand(this, command);
-    }
-  }
- 
   saveLocation() {
     axios.put(REST_HOST + '/location', {
       number: this.number,
