@@ -20,7 +20,7 @@ content-type: application/json
   "speed": 10.2
 }
 ###
-PUT http://localhost:3000/api/command/1001
+PUT http://185.26.50.123:3000/api/command/7551040072
 content-type: application/json
 
 {

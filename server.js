@@ -3,7 +3,7 @@ const colors = require('colors');
 const ConcoxLogger = require('./logger');
 const PacketParser = require('./lib/packetParser');
 const { terminals } = require('./terminals')
-const { Device } = require('./lib/concox');
+const { Concox, Device } = require('./lib/concox');
 const { ServerHeartbeat } = require('./packets/heartbeat');
 const { ServerLocation } = require('./packets/location');
 const { ServerLogin } = require('./packets/login');
@@ -15,6 +15,8 @@ const { ServerOnlineCommand } = require('./packets/onlineCommand');
 
 ssh ilkka@superapp1.superapp.fi
 https://docs.google.com/document/d/1laqBur8dCCLdN_wswdgb3KhQrnBgXfdjtgCCoN1dHhY/edit
+185.26.50.123
+044 950 9899
 
 */
 
@@ -44,7 +46,7 @@ class ConcoxServer extends ConcoxLogger {
   }
 
   sendLoginResponse(connection, request) {
-    const imei = request.infoContent.imei;
+    const imei = request.infoContent.imei.substr(1, 15);
     const terminal = terminals.findByImei(imei);
 
     if (terminal) {
@@ -69,7 +71,7 @@ class ConcoxServer extends ConcoxLogger {
 
   sendHeartbeatResponse(connection, request, terminal) {
     let response = new ServerHeartbeat();
-    response.assign();
+//    response.assign();
     response.serialNumber = request.serialNumber;
 
     this.sendPacket(connection, response);
@@ -118,15 +120,18 @@ class ConcoxServer extends ConcoxLogger {
 
   listen(port, callback) {
     this.server = net.createServer(connection => {
-      console.log(colors.green('Client connected from ' + connection.remoteAddress + ':' + connection.remotePort));
+      const date = new Date();
+      console.log(colors.green('Client connected on ' + date.toString() + 'from ' + connection.remoteAddress + ':' + connection.remotePort));
     
       connection.on('data', (buffer) => {
         const data = [...buffer];
-        const request = PacketParser.parse(data, Device.TERMINAL);
+        const requests = PacketParser.parse(data, Device.TERMINAL);
 
-        if (request) {
-          this.logPacket(request, data);
-          this.processRequest(connection, request);
+        if (requests.length > 0) {
+          for (const request of requests) {
+            this.logPacket(request, data);
+            this.processRequest(connection, request);
+          }
         } else {
           this.logData('Unknown client request', data);
         }
@@ -138,7 +143,6 @@ class ConcoxServer extends ConcoxLogger {
         if (terminal)
           terminal.disconnect();
 
-        console.log(terminals);
         this.logAction('Client disconnected');
       });
     

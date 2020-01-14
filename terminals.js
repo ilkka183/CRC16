@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const REST_HOST = 'http://localhost:49511/wp-json/juro/v1';
+const REST_HOST = 'http://localhost:51411/wp-json/juro/v1';
 
 
 class Terminal {
@@ -109,80 +109,107 @@ class Terminals {
 
   populate() {
     this.clear();
-    this.add(new Terminal('1001', '0355951091347489', '+358 44 950 9899', true));
-    this.add(new Terminal('1002', '1234567890123456', '+358 44 950 9900', true));
-    this.add(new Terminal('1003', '0123456789012345', '+358 44 950 0000', true));
+    this.add(new Terminal('7551040072', '355951092918858', '+358 44 950 9899', true));
+//    this.add(new Terminal('7551040070', '355951091347489', '+358 44 950 9899', true));
+    this.add(new Terminal('1001', '1234567890123456', '+358 44 950 9900', true));
+    this.add(new Terminal('1002', '0123456789012345', '+358 44 950 0000', true));
+
+    const numbers = [];
+
+    for (const item of this.items)
+      numbers.push(item.number);
+
+    console.log('Populate testing terminals', numbers);
   }
 
   addItem(item) {
     this.add(new Terminal(item.number, item.imei, item.phoneNumber, item.enabled));
   }
 
-  async getBicycles() {
-    const response = await axios.get(REST_HOST + '/bicycles');
-    return response.data;
+  load(intervalInSeconds) {
+    axios.get(REST_HOST + '/bicycles')
+      .then(response => {
+        const items = response.data;
+        const numbers = [];
+
+        this.clear();
+    
+        for (const item of items) {
+          this.addItem(item);
+          numbers.push(item.number);
+        }
+    
+        console.log('Load terminals', numbers);
+
+        setInterval(() => {
+          this.update();
+        }, intervalInSeconds*1000);
+
+        console.log(`Terminals updated every ${intervalInSeconds} seconds`);
+      });
   }
 
-  async load() {
-    const items = await this.getBicycles();
-    const numbers = [];
+  update() {
+    axios.get(REST_HOST + '/bicycles')
+      .then(response => {
+        const items = response.data;
 
-    this.clear();
+        // Remove old terminals
+        const removedNumbers = [];
 
-    for (const item of items) {
-      this.addItem(item);
-      numbers.push(item.number);
-    }
+        for (let i = this.items.length - 1; i >= 0; i--) {
+          const terminal = this.items[i];
 
-    console.log('Load terminals', numbers);
+          if (items.findIndex(item => item.number === terminal.number) == -1) {
+            this.items.splice(i, 1);
+
+            removedNumbers.push(terminal.number);
+          }
+        }
+
+        if (removedNumbers.length > 0)
+          console.log('Removed terminals:', removedNumbers);
+
+        // Add new and update exixtins terminals
+        const addedNumbers = [];
+        const updatedNumbers = [];
+
+        for (const item of items) {
+          const terminal = this.findByNumber(item.number);
+
+          if (terminal) {
+            // Update exixting if modified
+            if ((terminal.imei != item.imei) ||
+              (terminal.phoneNumber != item.phoneNumber) ||
+              (terminal.enabled != item.enabled))
+            {
+              terminal.imei = item.imei;
+              terminal.phoneNumber = item.phoneNumber;
+              terminal.enabled = item.enabled;
+
+              updatedNumbers.push(item.number);
+            }
+          } else {
+            // Add new
+            this.addItem(item);
+
+            addedNumbers.push(item.number);
+          }
+        }
+
+        if (addedNumbers.length > 0)
+          console.log('Added terminals:', addedNumbers);
+
+        if (updatedNumbers.length > 0)
+          console.log('Updated terminals:', updatedNumbers);
+      });
   }
 
-  async update() {
-    const items = await this.getBicycles();
-
-    // Remove old terminals
-    const oldNumbers = [];
-
-    for (let i = this.items.length - 1; i >= 0; i--) {
-      const terminal = this.items[i];
-
-      if (items.findIndex(item => item.number === terminal.number) == -1) {
-        this.items.splice(i, 1);
-        oldNumbers.push(terminal.number);
-      }
-    }
-
-    if (oldNumbers.length > 0) {
-      console.log('Terminals removed:', oldNumbers);
-    }
-
-    // Add new terminals
-    const newItems = [];
-
-    for (const item of items) {
-      if (this.findByNumber(item.number) == null)
-        newItems.push(item);
-    }
-
-    if (newItems.length > 0) {
-      const addedNumbers = [];
-
-      for (const item of newItems) {
-        this.addItem(item);
-        addedNumbers.push(item.number);
-      }
-
-      console.log('Terminals added:', addedNumbers);
-    }
-  }
-
-  async initialize(intervalInMinutes) {
-    await terminals.load();
-    console.log(`Terminals updated every ${intervalInMinutes} minutes`);
-
-    setInterval(() => {
-      terminals.update();
-    }, intervalInMinutes*60*1000);
+  initialize(intervalInSeconds, testing = false) {
+    if (testing)
+      this.populate();
+    else
+      this.load(intervalInSeconds);
   }
 }
 

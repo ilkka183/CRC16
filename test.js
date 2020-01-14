@@ -11,9 +11,9 @@ const { TerminalWifiInformation } = require('./packets/wifiInformation');
 
 function parse(hex, device) {
   const data = Concox.toBinary(hex);
-  const packet = PacketParser.parse(data, device);
+  const packets = PacketParser.parse(data, device);
 
-  if (packet)
+  for (const packet of packets)
     packet.log(data);
 }
 
@@ -42,7 +42,7 @@ function testLogin() {
   compare(packet, '78 78 11 01 08 68 12 01 48 37 35 71 36 05 32 02 00 39 DE F7 0D 0A', Device.TERMINAL);
 
   packet = new ServerLogin();
-  packet.assign({ year: 17, month: 3, day: 20, hour: 8, min: 56, second: 57 }, []);
+  packet.assign2({ year: 17, month: 3, day: 20, hour: 8, min: 56, second: 57 }, []);
   packet.serialNumber = 57;
   compare(packet, '78 78 0C 01 11 03 14 08 38 39 00 00 39 95 70 0D 0A', Device.SERVER);
 }
@@ -54,8 +54,9 @@ function testHeartbeat() {
   compare(packet, '78 78 0B 23 C0 01 22 04 00 01 00 08 18 72 0D 0A', Device.TERMINAL);
 
   packet = new ServerHeartbeat();
-  packet.serialNumber = 256;
-  compare(packet, '78 78 05 23 01 00 67 0E 0D 0A', Device.SERVER);
+  packet.serialNumber = 12;
+//  compare(packet, '78 78 05 23 01 00 67 0E 0D 0A', Device.SERVER);
+  compare(packet, '78 78 05 23 00 0C B4 BA 0D 0A', Device.SERVER);
 }
 
 function testLocation() {
@@ -162,6 +163,12 @@ function parseExample() {
   parse('78 78 05 23 00 04 38 F2 0D 0A', Device.SERVER);
 }
 
+function parseDouble() {
+//  parse('79 79 00 14 33 14 01 07 14 39 23 00 00 00 00 A2 03 00 00 01 00 01 3C A5 0D 0A', Device.TERMINAL);
+//  parse('79 79 00 14 33 14 01 0D 09 21 30 00 00 00 00 A0 03 00 14 01 00 0D E0 70 0D 0A', Device.TERMINAL);
+  parse('79 79 00 14 33 14 01 07 14 39 23 00 00 00 00 A2 03 00 00 01 00 01 3C A5 0D 0A 79 79 00 14 33 14 01 0D 09 21 30 00 00 00 00 A0 03 00 14 01 00 0D E0 70 0D 0A', Device.TERMINAL);
+}
+
 /*
 78 78 11 01 03 55 95 10 91 34 74 89 36 08 06 42 00 01 15 FC 0D 0A
 78 78 0C 01 13 0C 0D 02 39 0C 00 00 01 F6 EC 0D 0A
@@ -182,12 +189,13 @@ function parseExample() {
 78 78 05 23 00 09 E3 17 0D 0A
 */
 
-//testLogin();
+testLogin();
 //testHeartbeat();
-testLocation();
+//testLocation();
 //testWifiInformation();
 //testOnlineCommand();
 //testInformationTransmission();
 
 //buildExample();
 //parseExample();
+//parseDouble();

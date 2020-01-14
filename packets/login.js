@@ -116,6 +116,12 @@ class ServerLogin extends LoginPacket {
     this.reservedExtensionBit = reservedExtensionBit;
   }
 
+  assign2(dateTime, reservedExtensionBit) {
+    this.dateTime = dateTime;
+    this.reservedExtensionBitLength = reservedExtensionBit.length;
+    this.reservedExtensionBit = reservedExtensionBit;
+  }
+
   writeContent(writer) {
     writer.writeByte(this.dateTime.year);
     writer.writeByte(this.dateTime.month);

@@ -81,34 +81,37 @@ class ConcoxClient extends ConcoxLogger {
  
     this.connection.on('data', (buffer) => {
       const data = [...buffer];
-      const packet = PacketParser.parse(data, Device.SERVER);
-      this.logPacket(packet, data);
+      const packets = PacketParser.parse(data, Device.SERVER);
 
-      switch (packet.protocolNumber) {
-        case 0x01:
-          this.writeInformationTransmissionPacket();
-          break;
+      for (const packet of packets) {
+        this.logPacket(packet, data);
 
-        case 0x23:
-          if (this.serialNumber >= 17) {
-//            this.connection.end();
+        switch (packet.protocolNumber) {
+          case 0x01:
+            this.writeInformationTransmissionPacket();
+            break;
+  
+          case 0x23:
+            if (this.serialNumber >= 7) {
+              this.connection.end();
+            }
+            else {
+              setTimeout(() => {
+                this.writeHeartbeatPacket();
+              }, 2000);
+            }
+  
+            break;
+  
+          case 0x32:
+            this.writeHeartbeatPacket();
+            break;
+  
+          case 0x98:
+            this.writeLocationPacket();
+            break;
           }
-          else {
-            setTimeout(() => {
-              this.writeHeartbeatPacket();
-            }, 2000);
-          }
-
-          break;
-
-        case 0x32:
-          this.writeHeartbeatPacket();
-          break;
-
-        case 0x98:
-          this.writeLocationPacket();
-          break;
-        }
+      }
     });
      
     this.connection.on('close', () => {
@@ -126,7 +129,7 @@ SERVER,0,185.26.50.123,1234,0#
 044 950 9899
 */
 
-const imei = '0355951091347489';
+const imei = '355951092918858';
 const modelIdentificationCode = [0x36, 0x08];
 const timeZone = 2;
 
