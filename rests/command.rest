@@ -1,0 +1,21 @@
+PUT http://superapp1.superapp.fi:3000/api/command/7551040072
+content-type: application/json
+
+{
+  "command": "UNLOCK#"
+}
+###
+PUT http://superapp1.superapp.fi:3000/api/command/7551040072
+content-type: application/json
+
+{
+  "command": "WHERE#"
+}
+###
+PUT http://superapp1.superapp.fi:3000/api/command/7551040072
+content-type: application/json
+
+{
+  "command": "SERVER,1,superapp1.superapp.fi,1234,0#"
+}
+###

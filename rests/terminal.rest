@@ -1,6 +1,6 @@
-GET http://localhost:3000/api/
+GET http://superapp1.superapp.fi:3000/api/
 ###
-GET http://localhost:3000/api/1001
+GET http://superapp1.superapp.fi:3000/api/7551040072
 ###
 POST http://localhost:3000/api/
 content-type: application/json
@@ -18,34 +18,6 @@ content-type: application/json
   "latitude": 65.0,
   "longitude": 25.0,
   "speed": 10.2
-}
-###
-PUT http://185.26.50.123:3000/api/command/7551040072
-content-type: application/json
-
-{
-  "command": "UNLOCK#"
-}
-###
-PUT http://185.26.50.123:3000/api/command/7551040072
-content-type: application/json
-
-{
-  "command": "VERSION#"
-}
-###
-PUT http://185.26.50.123:3000/api/command/7551040072
-content-type: application/json
-
-{
-  "command": "STATUS#"
-}
-###
-PUT http://185.26.50.123:3000/api/command/7551040072
-content-type: application/json
-
-{
-  "command": "URL#"
 }
 ###
 DELETE http://localhost:3000/api/1010

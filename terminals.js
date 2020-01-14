@@ -18,6 +18,7 @@ class Terminal {
     this.serialTime = undefined;
     this.serialNumber = undefined;
 
+    this.locked = undefined;
     this.latitude = undefined;
     this.longitude = undefined;
     this.speed = undefined;
@@ -40,6 +41,7 @@ class Terminal {
       phoneNumber: this.phoneNumber,
       enabled: this.enabled,
       connected: this.connection != null,
+      locked: this.locked,
       loginTime: this.loginTime,
       serialTime: this.serialTime,
       serialNumber: this.serialNumber,

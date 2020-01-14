@@ -1,0 +1,28 @@
+PUT http://superapp1.superapp.fi:3000/api/command/7551040072
+content-type: application/json
+
+{
+  "command": "HBT#"
+}
+###
+PUT http://superapp1.superapp.fi:3000/api/command/7551040072
+content-type: application/json
+
+{
+  "command": "HBT,3#"
+}
+###
+PUT http://superapp1.superapp.fi:3000/api/command/7551040072
+content-type: application/json
+
+{
+  "command": "GTIMER#"
+}
+###
+PUT http://superapp1.superapp.fi:3000/api/command/7551040072
+content-type: application/json
+
+{
+  "command": "GPRSSET#"
+}
+###

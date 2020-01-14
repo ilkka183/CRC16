@@ -91,6 +91,7 @@ router.put('/command/:number', (req, res) => {
 
         res.send({
           terminal: item,
+          command,
           error
         });
 

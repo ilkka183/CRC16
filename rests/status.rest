@@ -1,0 +1,28 @@
+PUT http://superapp1.superapp.fi:3000/api/command/7551040072
+content-type: application/json
+
+{
+  "command": "VERSION#"
+}
+###
+PUT http://superapp1.superapp.fi:3000/api/command/7551040072
+content-type: application/json
+
+{
+  "command": "PARAM#"
+}
+###
+PUT http://superapp1.superapp.fi:3000/api/command/7551040072
+content-type: application/json
+
+{
+  "command": "STATUS#"
+}
+###
+PUT http://superapp1.superapp.fi:3000/api/command/7551040072
+content-type: application/json
+
+{
+  "command": "URL#"
+}
+###

@@ -96,6 +96,20 @@ class ConcoxServer extends ConcoxLogger {
   }
 
   sendLocationResponse(connection, request, terminal) {
+    if (request.protocolNumber = 0x33) {
+      switch (request.infoContent.status) {
+        case 0xA0:
+          console.log('locked', true);
+          terminal.locked = true;
+          break;
+
+        case 0xA1:
+          console.log('locked', false);
+          terminal.locked = false;
+          break;
+      }
+    }
+
     if (request.infoContent.gpsInformation) {
       terminal.latitude = request.infoContent.gpsInformation.latitude/1800000;
       terminal.longitude = request.infoContent.gpsInformation.longitude/1800000;
