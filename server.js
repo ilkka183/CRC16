@@ -96,31 +96,31 @@ class ConcoxServer extends ConcoxLogger {
   }
 
   sendLocationResponse(connection, request, terminal) {
-    if (request.protocolNumber = 0x33) {
-      switch (request.infoContent.status) {
-        case 0xA0:
-          console.log('locked', true);
-          terminal.locked = true;
-          break;
-
-        case 0xA1:
-          console.log('locked', false);
-          terminal.locked = false;
-          break;
-      }
-    }
-
     if (request.infoContent.gpsInformation) {
       terminal.latitude = request.infoContent.gpsInformation.latitude/1800000;
       terminal.longitude = request.infoContent.gpsInformation.longitude/1800000;
       terminal.speed = request.infoContent.gpsInformation.speed;
     }
 
-    let response = new ServerLocation();
+    let response = new ServerLocation(request.protocolNumber);
     response.assign();
     response.serialNumber = request.serialNumber;
 
     this.sendPacket(connection, response);
+
+    if (request.protocolNumber == 0x33) {
+      switch (request.infoContent.status) {
+        case 0xA0:
+          console.log(`Terminal ${terminal.number} has been locked`);
+          terminal.locked = true;
+          break;
+
+        case 0xA1:
+          console.log(`Terminal ${terminal.number} has been unlocked`);
+          terminal.locked = false;
+          break;
+      }
+    }
   }
 
   sendInformationTransmissionResponse(connection, request, terminal) {

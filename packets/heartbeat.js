@@ -1,16 +1,21 @@
 const Packet = require('../lib/packet');
+const { Device } = require('../lib/concox');
 
 
 class HeartbeatPacket extends Packet {
   getProtocolNumber() {
     return 0x23;
   }
+
+  getTitle() {
+    return 'Heartbeat';
+  }
 }
 
 
 class TerminalHeartbeat extends HeartbeatPacket {
-  getTitle() {
-    return 'Heartbeat (terminal request)';
+  getDevice() {
+    return Device.TERMINAL;
   }
 
   assign(terminalInformationContent, voltageLevel, gsmSignalLength, languageExtend) {
@@ -46,8 +51,8 @@ class TerminalHeartbeat extends HeartbeatPacket {
 
 
 class ServerHeartbeat extends HeartbeatPacket {
-  getTitle() {
-    return 'Heartbeat (server response)';
+  getDevice() {
+    return Device.SERVER;
   }
 
   assign() {

@@ -1,0 +1,402 @@
+ilkka@185-26-50-123:~/concox$ node app
+Populate testing terminals [ '7551040072', '1001', '1002' ]
+Juro TCP server listening on port 1234...
+Juro REST server listening on port 3000...
+Client connected on Wed Jan 15 2020 07:24:54 GMT+0200 (EET)from ::ffff:37.219.242.75:13693
+
+Login packet (terminal request)
+-------------------------------
+78 78 11 01 03 55 95 10 92 91 88 58 36 08 0C 81 00 01 FB D8 0D 0A
+{
+  "packetLength": 17,
+  "protocolNumber": 1,
+  "serialNumber": 1,
+  "infoContent": {
+    "imei": "0355951092918858",
+    "modelIdentificationCode": [
+      54,
+      8
+    ],
+    "timeZoneLanguage": {
+      "timeZone": 200,
+      "language": 1
+    }
+  }
+}
+
+Login packet (server response)
+------------------------------
+78 78 0C 01 14 01 0F 07 18 37 00 00 01 61 DD 0D 0A
+{
+  "packetLength": 0,
+  "protocolNumber": 1,
+  "serialNumber": 1,
+  "dateTime": {
+    "year": "20",
+    "month": 1,
+    "day": 15,
+    "hour": 7,
+    "min": 24,
+    "second": 55
+  },
+  "reservedExtensionBitLength": 0,
+  "reservedExtensionBit": []
+}
+
+Information transmission (terminal request)
+-------------------------------------------
+79 79 00 80 98 00 00 08 03 55 95 10 92 91 88 58 01 00 08 02 44 12 13 03 72 45 37 02 00 0A 89 35 80 61 90 81 25 45 37 8F 03 00 10 4A 63 40 EE D1 25 11 97 8D C1 66 2C 27 C2 37 70 04 00 06 C4 A8 28 0B E8 29 05 00 06 30 30 30 30 30 30 06 00 10 20 57 2F 52 36 4B 3F 47 30 50 41 58 11 63 2D 2B 07 00 1D 47 42 31 31 30 5F 31 30 5F 41 31 44 45 5F 44 32 33 5F 52 30 5F 56 32 32 5F 57 49 46 49 00 02 AA C4 0D 0A
+{
+  "packetLength": 128,
+  "protocolNumber": 152,
+  "serialNumber": 2,
+  "modules": [],
+  "infoContent": [
+    {
+      "number": 0,
+      "length": 8,
+      "content": [
+        3,
+        85,
+        149,
+        16,
+        146,
+        145,
+        136,
+        88
+      ]
+    },
+    {
+      "number": 1,
+      "length": 8,
+      "content": [
+        2,
+        68,
+        18,
+        19,
+        3,
+        114,
+        69,
+        55
+      ]
+    },
+    {
+      "number": 2,
+      "length": 10,
+      "content": [
+        137,
+        53,
+        128,
+        97,
+        144,
+        129,
+        37,
+        69,
+        55,
+        143
+      ]
+    },
+    {
+      "number": 3,
+      "length": 16,
+      "content": [
+        74,
+        99,
+        64,
+        238,
+        209,
+        37,
+        17,
+        151,
+        141,
+        193,
+        102,
+        44,
+        39,
+        194,
+        55,
+        112
+      ]
+    },
+    {
+      "number": 4,
+      "length": 6,
+      "content": [
+        196,
+        168,
+        40,
+        11,
+        232,
+        41
+      ]
+    },
+    {
+      "number": 5,
+      "length": 6,
+      "content": [
+        48,
+        48,
+        48,
+        48,
+        48,
+        48
+      ]
+    },
+    {
+      "number": 6,
+      "length": 16,
+      "content": [
+        32,
+        87,
+        47,
+        82,
+        54,
+        75,
+        63,
+        71,
+        48,
+        80,
+        65,
+        88,
+        17,
+        99,
+        45,
+        43
+      ]
+    },
+    {
+      "number": 7,
+      "length": 29,
+      "content": [
+        71,
+        66,
+        49,
+        49,
+        48,
+        95,
+        49,
+        48,
+        95,
+        65,
+        49,
+        68,
+        69,
+        95,
+        68,
+        50,
+        51,
+        95,
+        82,
+        48,
+        95,
+        86,
+        50,
+        50,
+        95,
+        87,
+        73,
+        70,
+        73
+      ]
+    }
+  ]
+}
+
+Information transmission (server response)
+------------------------------------------
+79 79 00 06 98 00 00 02 E4 12 0D 0A
+{
+  "packetLength": 0,
+  "protocolNumber": 152,
+  "serialNumber": 2,
+  "reservedExtensionBitLength": 0,
+  "reservedExtensionBit": []
+}
+
+Heartbeat (terminal request)
+----------------------------
+78 78 0B 23 05 01 9E 04 00 02 00 03 83 31 0D 0A
+{
+  "packetLength": 11,
+  "protocolNumber": 35,
+  "serialNumber": 3,
+  "infoContent": {
+    "terminalInformationContent": 5,
+    "voltageLevel": 414,
+    "gsmSignalLength": 4,
+    "languageExtend": 2
+  }
+}
+
+Heartbeat (server response)
+---------------------------
+78 78 05 23 00 03 4C 4D 0D 0A
+{
+  "packetLength": 0,
+  "protocolNumber": 35,
+  "serialNumber": 3
+}
+Command "UNLOCK#" to terminal 7551040072
+
+Online command (server request)
+-------------------------------
+78 78 11 80 0B 00 00 00 00 55 4E 4C 4F 43 4B 23 00 03 70 46 0D 0A
+{
+  "packetLength": 0,
+  "protocolNumber": 128,
+  "serialNumber": 3,
+  "infoContent": {
+    "length": 11,
+    "flags": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "command": "UNLOCK#"
+  }
+}
+
+Online command (terminal response)
+----------------------------------
+79 79 00 0D 21 00 00 00 00 01 4F 4B 21 00 04 94 AB 0D 0A
+{
+  "packetLength": 13,
+  "protocolNumber": 33,
+  "serialNumber": 4,
+  "infoContent": {
+    "flags": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "encoding": 1,
+    "command": "OK!"
+  }
+}
+Reply "OK!" from terminal 7551040072
+
+Location (terminal request)
+---------------------------
+79 79 00 14 33 14 01 0F 07 19 05 00 00 00 00 A1 03 00 2B 00 00 05 5A 33 0D 0A
+{
+  "packetLength": 20,
+  "protocolNumber": 50,
+  "serialNumber": 5,
+  "infoContent": {
+    "dateTime": {
+      "year": 20,
+      "month": 1,
+      "day": 15,
+      "hour": 7,
+      "min": 25,
+      "second": 5
+    },
+    "gpsInformationLength": 0,
+    "mainBaseStationLength": 0,
+    "subBaseStationLength": 0,
+    "subBaseStations": [],
+    "wifiMessageLength": 0,
+    "wifiMessages": [],
+    "status": 161,
+    "reservedExtensionBitLength": 3,
+    "reservedExtensionBit": [
+      0,
+      43,
+      0
+    ]
+  }
+}
+locked false
+
+Location (server response)
+--------------------------
+79 79 00 05 32 00 05 C5 9B 0D 0A
+{
+  "packetLength": 0,
+  "protocolNumber": 50,
+  "serialNumber": 5
+}
+Command "UNLOCK#" to terminal 7551040072
+
+Online command (server request)
+-------------------------------
+78 78 11 80 0B 00 00 00 00 55 4E 4C 4F 43 4B 23 00 05 15 70 0D 0A
+{
+  "packetLength": 0,
+  "protocolNumber": 128,
+  "serialNumber": 5,
+  "infoContent": {
+    "length": 11,
+    "flags": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "command": "UNLOCK#"
+  }
+}
+
+Location (terminal request)
+---------------------------
+79 79 00 14 33 14 01 0F 07 19 0B 00 00 00 00 A0 03 00 2B 00 00 06 FA 5C 0D 0A
+{
+  "packetLength": 20,
+  "protocolNumber": 50,
+  "serialNumber": 6,
+  "infoContent": {
+    "dateTime": {
+      "year": 20,
+      "month": 1,
+      "day": 15,
+      "hour": 7,
+      "min": 25,
+      "second": 11
+    },
+    "gpsInformationLength": 0,
+    "mainBaseStationLength": 0,
+    "subBaseStationLength": 0,
+    "subBaseStations": [],
+    "wifiMessageLength": 0,
+    "wifiMessages": [],
+    "status": 160,
+    "reservedExtensionBitLength": 3,
+    "reservedExtensionBit": [
+      0,
+      43,
+      0
+    ]
+  }
+}
+locked true
+
+Location (server response)
+--------------------------
+79 79 00 05 32 00 06 F7 00 0D 0A
+{
+  "packetLength": 0,
+  "protocolNumber": 50,
+  "serialNumber": 6
+}
+
+Online command (terminal response)
+----------------------------------
+79 79 00 0D 21 00 00 00 00 01 4F 4B 21 00 07 A6 30 0D 0A
+{
+  "packetLength": 13,
+  "protocolNumber": 33,
+  "serialNumber": 7,
+  "infoContent": {
+    "flags": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "encoding": 1,
+    "command": "OK!"
+  }
+}
+Reply "OK!" from terminal 7551040072

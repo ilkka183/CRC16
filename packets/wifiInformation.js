@@ -1,16 +1,21 @@
 const Packet = require('../lib/packet');
+const { Device } = require('../lib/concox');
 
 
 class WifiInformationPacket extends Packet {
   getProtocolNumber() {
     return 0x2C;
   }
+
+  getTitle() {
+    return 'Wifi information';
+  }
 }
 
 
 class TerminalWifiInformation extends WifiInformationPacket {
-  getTitle() {
-    return 'Wifi information (terminal request)';
+  getDevice() {
+    return Device.TERMINAL;
   }
 
   assign() {

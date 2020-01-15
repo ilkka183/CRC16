@@ -79,7 +79,7 @@ router.put('/command/:number', (req, res) => {
     terminal.server.sendOnlineCommand(terminal, command)
       .then(reply => {
         res.send({
-          terminal: item,
+          terminal: item.number,
           command,
           reply
         });
@@ -90,7 +90,7 @@ router.put('/command/:number', (req, res) => {
         res.status(501);
 
         res.send({
-          terminal: item,
+          terminal: item.number,
           command,
           error
         });

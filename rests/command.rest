@@ -1,18 +1,20 @@
-PUT http://superapp1.superapp.fi:3000/api/command/7551040072
+GET http://localhost:3000/api/
+###
+PUT http://localhost:3000/api/command/7551040072
 content-type: application/json
 
 {
   "command": "UNLOCK#"
 }
 ###
-PUT http://superapp1.superapp.fi:3000/api/command/7551040072
+PUT http://localhost:3000/api/command/7551040072
 content-type: application/json
 
 {
   "command": "WHERE#"
 }
 ###
-PUT http://superapp1.superapp.fi:3000/api/command/7551040072
+PUT http://localhost:3000/api/command/7551040072
 content-type: application/json
 
 {

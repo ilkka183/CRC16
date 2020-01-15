@@ -1,7 +1,11 @@
 const Packet = require('../lib/packet');
+const { Device } = require('../lib/concox');
 
 
 class OnlineCommandPacket extends Packet {
+  getTitle() {
+    return 'Online command';
+  }
 }
 
 
@@ -10,8 +14,8 @@ class TerminalOnlineCommand extends OnlineCommandPacket {
     return 0x21;
   }
 
-  getTitle() {
-    return 'Online command (terminal response)';
+  getDevice() {
+    return Device.TERMINAL;
   }
 
   assign(flags, encoding, command) {
@@ -47,8 +51,8 @@ class ServerOnlineCommand extends OnlineCommandPacket {
     return 0x80;
   }
 
-  getTitle() {
-    return 'Online command (server request)';
+  getDevice() {
+    return Device.SERVER;
   }
 
   assign(command) {

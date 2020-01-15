@@ -1,7 +1,12 @@
 const Packet = require('../lib/packet');
+const { Device } = require('../lib/concox');
 
 
 class InformationTransmissionPacket extends Packet {
+  getTitle() {
+    return 'Information transmission';
+  }
+
   getProtocolNumber() {
     return 0x98;
   }
@@ -14,8 +19,8 @@ class TerminalInformationTransmission extends InformationTransmissionPacket {
     this.modules = [];
   }
   
-  getTitle() {
-    return 'Information transmission (terminal request)';
+  getDevice() {
+    return Device.TERMINAL;
   }
 
   assign(modules) {
@@ -48,8 +53,8 @@ class TerminalInformationTransmission extends InformationTransmissionPacket {
 
 
 class ServerInformationTransmission extends InformationTransmissionPacket {
-  getTitle() {
-    return 'Information transmission (server response)';
+  getDevice() {
+    return Device.SERVER;
   }
 
   assign(reservedExtensionBit) {

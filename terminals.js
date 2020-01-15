@@ -4,7 +4,7 @@ const REST_HOST = 'http://localhost:51411/wp-json/juro/v1';
 
 
 class Terminal {
-  constructor(number, imei, phoneNumber, enabled) {
+  constructor(number, imei, phoneNumber, enabled, locked, latitude, longitude) {
     this.number = number;
     this.imei = imei;
     this.phoneNumber = phoneNumber;
@@ -18,9 +18,9 @@ class Terminal {
     this.serialTime = undefined;
     this.serialNumber = undefined;
 
-    this.locked = undefined;
-    this.latitude = undefined;
-    this.longitude = undefined;
+    this.locked = locked;
+    this.latitude = latitude;
+    this.longitude = longitude;
     this.speed = undefined;
     this.onlineCommandResolve = null;
   }
@@ -106,17 +106,16 @@ class Terminals {
 
   populate() {
     this.clear();
-    this.add(new Terminal('7551040072', '355951092918858', '+358 44 950 9899', true));
-//    this.add(new Terminal('7551040070', '355951091347489', '+358 44 950 9899', true));
-    this.add(new Terminal('1001', '1234567890123456', '+358 44 950 9900', true));
-    this.add(new Terminal('1002', '0123456789012345', '+358 44 950 0000', true));
+    this.add(new Terminal('7551040072', '355951092918858', '+358 44 950 9899', true, true, 60.175, 24.924));
+    this.add(new Terminal('1001', '123456789012345', '+358 44 950 9900', true, true, 60.18, 24.93));
+    this.add(new Terminal('1002', '012345678901234', '+358 44 950 9901', true, true, 60.185, 24.926));
 
     const numbers = [];
 
     for (const item of this.items)
       numbers.push(item.number);
 
-    console.log('Populate testing terminals', numbers);
+    console.log('Testing terminals', numbers);
   }
 
   addItem(item) {

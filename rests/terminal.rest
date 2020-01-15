@@ -1,6 +1,6 @@
-GET http://superapp1.superapp.fi:3000/api/
+GET http://localhost:3000/api/
 ###
-GET http://superapp1.superapp.fi:3000/api/7551040072
+GET http://localhost:3000/api/7551040072
 ###
 POST http://localhost:3000/api/
 content-type: application/json

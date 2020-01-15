@@ -1,24 +1,39 @@
 const Packet = require('../lib/packet');
-const { Concox } = require('../lib/concox');
+const { Concox, Device } = require('../lib/concox');
 
 
 class LocationPacket extends Packet {
+  constructor(protocolNumber) {
+    super();
+
+    this.protocolNumber = protocolNumber;
+  }
+
+  getTitle() {
+    return 'Location';
+  }
+
   getProtocolNumber() {
-    return 0x32;
+    return this.protocolNumber;
   }
 }
 
 
 class TerminalLocation extends LocationPacket {
-  getTitle() {
-    return 'Location (terminal request)';
+  constructor(protocolNumber) {
+    super(protocolNumber);
   }
 
-  assign(date, latitude, longitude, speed) {
+  getDevice() {
+    return Device.TERMINAL;
+  }
+
+  assign(date, latitude, longitude, speed, status) {
     this.dateTime = Concox.dateToObject(date);
     this.latitude = latitude;
     this.longitude = longitude;
     this.speed = speed;
+    this.status = status;
   }
 
   writeContent(writer) {
@@ -39,7 +54,7 @@ class TerminalLocation extends LocationPacket {
     writer.writeByte(0); // Main base station length
     writer.writeByte(0); // Sub base station length
     writer.writeByte(0); // WiFi message length
-    writer.writeByte(15);
+    writer.writeByte(this.status);
     writer.writeByte(0); // Reserved extenstion bit length
   }
 
@@ -137,8 +152,12 @@ class TerminalLocation extends LocationPacket {
 
 
 class ServerLocation extends LocationPacket {
-  getTitle() {
-    return 'Location (server response)';
+  constructor(protocolNumber) {
+    super(protocolNumber);
+  }
+
+  getDevice() {
+    return Device.SERVER;
   }
 
   assign() {

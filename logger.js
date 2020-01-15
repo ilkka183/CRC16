@@ -15,7 +15,7 @@ class ConcoxLogger {
     if (this.detailLog)
       packet.log(data);
     else
-      this.logData(packet.getFullTitle() + ':', data);
+      this.logData(packet.getFullTitle() + ' #' + packet.serialNumber + ':', data);
   }
 
   logAction(text) {

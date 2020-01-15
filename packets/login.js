@@ -1,8 +1,12 @@
 const Packet = require('../lib/packet');
-const { Concox } = require('../lib/concox');
+const { Concox, Device } = require('../lib/concox');
 
 
 class LoginPacket extends Packet {
+  getTitle() {
+    return 'Login packet';
+  }
+
   getProtocolNumber() {
     return 0x01;
   }
@@ -14,8 +18,8 @@ class TerminalLogin extends LoginPacket {
     return 0b10;
   }
 
-  getTitle() {
-    return 'Login packet (terminal request)';
+  getDevice() {
+    return Device.TERMINAL;
   }
 
   getEncryptedCrc() {
@@ -106,8 +110,8 @@ class TerminalLogin extends LoginPacket {
 
 
 class ServerLogin extends LoginPacket {
-  getTitle() {
-    return 'Login packet (server response)';
+  getDevice() {
+    return Device.SERVER;
   }
 
   assign(date, reservedExtensionBit) {
