@@ -106,9 +106,11 @@ class Terminals {
 
   populate() {
     this.clear();
-    this.add(new Terminal('7551040072', '355951092918858', '+358 44 950 9899', true, true, 60.175, 24.924));
+    this.add(new Terminal('7551040072', '355951092918858', '+358 44 950 9899', true, true, 60.177, 24.924));
     this.add(new Terminal('1001', '123456789012345', '+358 44 950 9900', true, true, 60.18, 24.93));
-    this.add(new Terminal('1002', '012345678901234', '+358 44 950 9901', true, true, 60.185, 24.926));
+    this.add(new Terminal('1002', '012345678901234', '+358 44 950 9901', true, true, 60.181, 24.926));
+    this.add(new Terminal('1003', '111111111111111', '+358 44 950 9902', true, true, 60.178, 24.924));
+    this.add(new Terminal('1004', '222222222222222', '+358 44 950 9903', true, true, 60.182, 24.926));
 
     const numbers = [];
 
