@@ -57,7 +57,7 @@ class ConcoxServer extends ConcoxLogger {
     });
   }
 
-  handleOnlineCommandResponse(connection, packet, terminal) {
+  handleOnlineCommandResponse(packet, terminal) {
     if (terminal.onlineCommandResolve) {
       terminal.onlineCommandResolve(packet.infoContent.command);
     }

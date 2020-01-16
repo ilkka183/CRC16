@@ -4,8 +4,8 @@ const device = new ConcoxDevice();
 device.detailLog = false;
 device.number = '1001',
 device.imei = '123456789012345',
-device.latitude = 60.18;
-device.longitude = 24.93;
+device.latitude = 60.170714;
+device.longitude = 24.941294;
 
 device.route = [
   { lat: -0.01, lng: +0.01 },

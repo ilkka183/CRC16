@@ -142,7 +142,7 @@ class ConcoxDevice extends ConcoxLogger {
     this.sendPacket(packet);
   }
 
-  start() {
+  createReadline() {
     this.readline = readline.createInterface({
       input: process.stdin,
       output: process.stdout
@@ -152,51 +152,37 @@ class ConcoxDevice extends ConcoxLogger {
     
     this.readline.on('line', command => {
       switch (command) {
-        case 'lock':
-          this.lock();
-          break;
-    
-        case 'unlock':
-          this.unlock();
-          break;
-  
-        case 'up':
-          this.moveUp();
-          break;
-
-        case 'down':
-          this.moveDown();
-          break;
-
-        case 'left':
-          this.moveLeft();
-          break;
-
-        case 'right':
-          this.moveRight();
-          break;
-  
-        case 'close':
-        case 'stop':
-          this.stop();
-          break;
+        case 'lock': this.lock(); break;
+        case 'unlock': this.unlock(); break;
+        case 'up': this.moveUp(); break;
+        case 'down': this.moveDown(); break;
+        case 'left': this.moveLeft(); break;
+        case 'right': this.moveRight(); break;
+        case 'stop': this.stop(); break;
       }
     });
+  }
+
+  setIntervals() {
+    this.heartbeatInterval = setInterval(() => {
+      this.sendHeartbeatPacket();
+    }, this.heartbeatDelay);
+
+    if (this.routeEnabled && this.route) {
+      this.routeInterval = setInterval(() => {
+        this.stepRoute();
+      }, this.routeDelay);
+    }
+  }
+
+  start() {
+    this.createReadline();
     
     this.connection = net.createConnection(this.port, this.host, () => {
       console.log(colors.green('Terminal connected to server ' + this.connection.remoteAddress + ':' + this.connection.remotePort));
 
       this.sendLoginPacket();
-
-      this.heartbeatInterval = setInterval(() => {
-        this.sendHeartbeatPacket();
-      }, this.heartbeatDelay);
-
-      if (this.routeEnabled && this.route) {
-        this.routeInterval = setInterval(() => {
-          this.stepRoute();
-        }, this.routeDelay);
-      }
+      this.setIntervals();
     });
  
     this.connection.on('data', (buffer) => {
@@ -212,9 +198,8 @@ class ConcoxDevice extends ConcoxLogger {
             break;
   
           case 0x23:
-            if (this.maxSerialNumber && (this.serialNumber >= this.maxSerialNumber)) {
+            if (this.maxSerialNumber && (this.serialNumber >= this.maxSerialNumber))
               this.stop();
-            }
   
             break;
   
