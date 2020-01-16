@@ -2,9 +2,9 @@ const net = require('net');
 const colors = require('colors');
 const ConcoxLogger = require('./logger');
 const PacketParser = require('./lib/packetParser');
-const { Device } = require('./lib/concox');
-const { TerminalInformationTransmission } = require('./packets/informationTransmission');
+const { Sender } = require('./lib/concox');
 const { TerminalHeartbeat } = require('./packets/heartbeat');
+const { TerminalInformationTransmission } = require('./packets/informationTransmission');
 const { TerminalLocation } = require('./packets/location');
 const { TerminalLogin } = require('./packets/login');
 
@@ -81,7 +81,7 @@ class ConcoxClient extends ConcoxLogger {
  
     this.connection.on('data', (buffer) => {
       const data = [...buffer];
-      const packets = PacketParser.parse(data, Device.SERVER);
+      const packets = PacketParser.parse(data, Sender.SERVER);
 
       for (const packet of packets) {
         this.logPacket(packet, data);

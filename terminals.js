@@ -9,6 +9,7 @@ class Terminal {
     this.imei = imei;
     this.phoneNumber = phoneNumber;
     this.enabled = enabled;
+    this.locked = locked;
 
     this.server = null;
     this.connection = null;
@@ -18,10 +19,13 @@ class Terminal {
     this.serialTime = undefined;
     this.serialNumber = undefined;
 
-    this.locked = locked;
+    this.startTime = undefined;
+    this.stopTime = undefined;
+
     this.latitude = latitude;
     this.longitude = longitude;
     this.speed = undefined;
+
     this.onlineCommandResolve = null;
   }
 
@@ -34,20 +38,35 @@ class Terminal {
     this.serialNumber = undefined;
   }
 
+  startUsage() {
+    this.startTime = new Date();
+    this.stopTime = undefined;
+  }
+
+  stopUsage() {
+    this.stopTime = new Date();
+  }
+
+  get duration() {
+    return (this.startTime && this.stopTime) ? Math.floor((this.stopTime - this.startTime)/1000) : undefined;
+  }
+
   getObject() {
     return {
       number: this.number,
       imei: this.imei,
       phoneNumber: this.phoneNumber,
       enabled: this.enabled,
-      connected: this.connection != null,
       locked: this.locked,
-      loginTime: this.loginTime,
-      serialTime: this.serialTime,
-      serialNumber: this.serialNumber,
+      startTime: this.startTime,
+      stopTime: this.stopTime,
+      duration: this.duration,
       latitude: this.latitude,
       longitude: this.longitude,
       speed: this.speed,
+      loginTime: this.loginTime,
+      serialTime: this.serialTime,
+      serialNumber: this.serialNumber,
     }
   }
 
@@ -108,9 +127,9 @@ class Terminals {
     this.clear();
     this.add(new Terminal('7551040072', '355951092918858', '+358 44 950 9899', true, true, 60.177, 24.924));
     this.add(new Terminal('1001', '123456789012345', '+358 44 950 9900', true, true, 60.18, 24.93));
-    this.add(new Terminal('1002', '012345678901234', '+358 44 950 9901', true, true, 60.181, 24.926));
-    this.add(new Terminal('1003', '111111111111111', '+358 44 950 9902', true, true, 60.178, 24.924));
-    this.add(new Terminal('1004', '222222222222222', '+358 44 950 9903', true, true, 60.182, 24.926));
+//    this.add(new Terminal('1002', '012345678901234', '+358 44 950 9901', true, true, 60.181, 24.926));
+//    this.add(new Terminal('1003', '111111111111111', '+358 44 950 9902', true, true, 60.178, 24.924));
+//    this.add(new Terminal('1004', '222222222222222', '+358 44 950 9903', true, true, 60.182, 24.926));
 
     const numbers = [];
 

@@ -3,61 +3,48 @@ const colors = require('colors');
 const readline = require('readline');
 const ConcoxLogger = require('./logger');
 const PacketParser = require('./lib/packetParser');
-const { Device } = require('./lib/concox');
-const { TerminalInformationTransmission } = require('./packets/informationTransmission');
+const { Sender } = require('./lib/concox');
 const { TerminalHeartbeat } = require('./packets/heartbeat');
+const { TerminalInformationTransmission } = require('./packets/informationTransmission');
 const { TerminalLocation } = require('./packets/location');
 const { TerminalLogin } = require('./packets/login');
 const { TerminalOnlineCommand } = require('./packets/onlineCommand');
-
-
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-
-rl.prompt();
-
-rl.on('line', command => {
-  switch (command) {
-    case 'lock':
-      device.lock();
-      break;
-
-    case 'unlock':
-      device.unlock();
-      break;
-
-    case 'close':
-    case 'stop':
-      device.stop();
-      break;
-  }
-});
 
 
 class ConcoxDevice extends ConcoxLogger {
   constructor() {
     super();
 
-    this.imei = '123456789012345',
+    this.number = undefined,
+    this.imei = undefined,
     this.modelIdentificationCode = [0x36, 0x08];
     this.timeZone = 2;
+    this.heartbeatInterval = null;
     this.heartbeatDelay = 30000;
-    this.heartbeatTimeout = null;
     this.serialNumber = undefined;
     this.maxSerialNumber = undefined;
+
+    this.latitude = undefined;
+    this.longitude = undefined;
+
+    this.route = null;
+    this.routeInterval = null;
+    this.routeDelay = 10000;
+    this.routeIndex = 0;
+    this.routeEnabled = true;
 
     this.host = 'localhost';
     this.port = 1234;
     this.connection = null;
+
+    this.readline = null;
   }
 
   sendPacket(packet) {
     const data = packet.build();
     const buffer = Buffer.from(data);
 
-    this.logPacket(packet, data);
+    this.logPacket(packet, data, this.number);
     this.connection.write(buffer);
   }
 
@@ -101,10 +88,40 @@ class ConcoxDevice extends ConcoxLogger {
     this.serialNumber++;
 
     const packet = new TerminalLocation(protocolNumber);
-    packet.assign(new Date(), 60.175, 24.928, 10, status);
+    packet.assign(new Date(), this.latitude, this.longitude, 10, status);
     packet.serialNumber = this.serialNumber;
 
     this.sendPacket(packet);
+  }
+
+  moveUp() {
+    this.latitude += 0.001;
+    this.sendLocationPacket(0x32);
+  }
+
+  moveDown() {
+    this.latitude -= 0.001;
+    this.sendLocationPacket(0x32);
+  }
+
+  moveLeft() {
+    this.longitude -= 0.001;
+    this.sendLocationPacket(0x32);
+  }
+
+  moveRight() {
+    this.longitude += 0.001;
+    this.sendLocationPacket(0x32);
+  }
+
+  stepRoute() {
+    const step = this.route[this.routeIndex];
+
+    this.latitude += step.lat;
+    this.longitude += step.lng;
+    this.sendLocationPacket(0x32);
+
+    this.routeIndex = (this.routeIndex + 1)%this.route.length
   }
 
   lock() {
@@ -126,18 +143,68 @@ class ConcoxDevice extends ConcoxLogger {
   }
 
   start() {
+    this.readline = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+    
+    this.readline.prompt();
+    
+    this.readline.on('line', command => {
+      switch (command) {
+        case 'lock':
+          this.lock();
+          break;
+    
+        case 'unlock':
+          this.unlock();
+          break;
+  
+        case 'up':
+          this.moveUp();
+          break;
+
+        case 'down':
+          this.moveDown();
+          break;
+
+        case 'left':
+          this.moveLeft();
+          break;
+
+        case 'right':
+          this.moveRight();
+          break;
+  
+        case 'close':
+        case 'stop':
+          this.stop();
+          break;
+      }
+    });
+    
     this.connection = net.createConnection(this.port, this.host, () => {
       console.log(colors.green('Terminal connected to server ' + this.connection.remoteAddress + ':' + this.connection.remotePort));
 
       this.sendLoginPacket();
+
+      this.heartbeatInterval = setInterval(() => {
+        this.sendHeartbeatPacket();
+      }, this.heartbeatDelay);
+
+      if (this.routeEnabled && this.route) {
+        this.routeInterval = setInterval(() => {
+          this.stepRoute();
+        }, this.routeDelay);
+      }
     });
  
     this.connection.on('data', (buffer) => {
       const data = [...buffer];
-      const packets = PacketParser.parse(data, Device.SERVER);
+      const packets = PacketParser.parse(data, Sender.SERVER);
 
       for (const packet of packets) {
-        this.logPacket(packet, data);
+        this.logPacket(packet, data, this.number);
 
         switch (packet.protocolNumber) {
           case 0x01:
@@ -148,18 +215,9 @@ class ConcoxDevice extends ConcoxLogger {
             if (this.maxSerialNumber && (this.serialNumber >= this.maxSerialNumber)) {
               this.stop();
             }
-            else {
-              this.heartbeatTimeout = setTimeout(() => {
-                this.sendHeartbeatPacket();
-              }, this.heartbeatDelay);
-            }
   
             break;
   
-          case 0x32:
-            this.sendHeartbeatPacket();
-            break;
-
           case 0x80:
             this.sendOnlineCommandPacket(packet);
             break;
@@ -182,18 +240,13 @@ class ConcoxDevice extends ConcoxLogger {
   }
 
   stop() {
-    clearTimeout(this.heartbeatTimeout);
+    clearInterval(this.heartbeatInterval);
+
+    if (this.routeInterval)
+      clearInterval(this.routeInterval);
+
     this.connection.end();
   }
 }
 
-
-const device = new ConcoxDevice();
-device.detailLog = false;
-device.imei = '355951092918858',
-device.modelIdentificationCode = [0x36, 0x08];
-device.timeZone = 2;
-device.heartbeatDelay = 30000;
-device.host = 'localhost';
-device.port = 1234;
-device.start();
+module.exports = ConcoxDevice;

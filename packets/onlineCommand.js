@@ -1,5 +1,5 @@
 const Packet = require('../lib/packet');
-const { Device } = require('../lib/concox');
+const { Sender } = require('../lib/concox');
 
 
 class OnlineCommandPacket extends Packet {
@@ -14,8 +14,8 @@ class TerminalOnlineCommand extends OnlineCommandPacket {
     return 0x21;
   }
 
-  getDevice() {
-    return Device.TERMINAL;
+  getSender() {
+    return Sender.TERMINAL;
   }
 
   assign(flags, encoding, command) {
@@ -51,8 +51,8 @@ class ServerOnlineCommand extends OnlineCommandPacket {
     return 0x80;
   }
 
-  getDevice() {
-    return Device.SERVER;
+  getSender() {
+    return Sender.SERVER;
   }
 
   assign(command) {

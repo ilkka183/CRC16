@@ -3,11 +3,11 @@ const colors = require('colors');
 const ConcoxLogger = require('./logger');
 const PacketParser = require('./lib/packetParser');
 const { terminals } = require('./terminals')
-const { Concox, Device } = require('./lib/concox');
+const { Sender } = require('./lib/concox');
 const { ServerHeartbeat } = require('./packets/heartbeat');
+const { ServerInformationTransmission } = require('./packets/informationTransmission');
 const { ServerLocation } = require('./packets/location');
 const { ServerLogin } = require('./packets/login');
-const { ServerInformationTransmission } = require('./packets/informationTransmission');
 const { ServerOnlineCommand } = require('./packets/onlineCommand');
 
 
@@ -28,12 +28,12 @@ class ConcoxServer extends ConcoxLogger {
     this.commandTimeoutDelay = 10000;
   }
 
-  sendPacket(connection, packet) {
+  sendPacket(terminal, packet) {
     const data = packet.build();
     const buffer = Buffer.from(data);
 
-    this.logPacket(packet, data);
-    connection.write(buffer);
+    this.logPacket(packet, data, terminal.number);
+    terminal.connection.write(buffer);
   }
 
   sendOnlineCommand(terminal, command) {
@@ -43,7 +43,7 @@ class ConcoxServer extends ConcoxLogger {
         response.assign(command);
         response.serialNumber = terminal.serialNumber;
     
-        this.sendPacket(terminal.connection, response);
+        this.sendPacket(terminal, response);
 
         terminal.onlineCommandResolve = resolve;
 
@@ -74,28 +74,28 @@ class ConcoxServer extends ConcoxLogger {
       response.assign(time, []);
       response.serialNumber = request.serialNumber;
   
-      this.sendPacket(connection, response);
-
       terminal.server = this;
       terminal.connection = connection;
       terminal.address = connection.remoteAddress;
       terminal.port = connection.remotePort;
       terminal.loginTime = time;
       terminal.serialNumber = request.serialNumber;
+
+      this.sendPacket(terminal, response);
     } else {
       this.logError(`IMEI ${imei} not found`);
     }
   }
 
-  sendHeartbeatResponse(connection, request, terminal) {
+  sendHeartbeatResponse(request, terminal) {
     let response = new ServerHeartbeat();
     response.assign();
     response.serialNumber = request.serialNumber;
 
-    this.sendPacket(connection, response);
+    this.sendPacket(terminal, response);
   }
 
-  sendLocationResponse(connection, request, terminal) {
+  sendLocationResponse(request, terminal) {
     if (request.infoContent.gpsInformation) {
       terminal.latitude = request.infoContent.gpsInformation.latitude/1800000;
       terminal.longitude = request.infoContent.gpsInformation.longitude/1800000;
@@ -106,34 +106,34 @@ class ConcoxServer extends ConcoxLogger {
     response.assign();
     response.serialNumber = request.serialNumber;
 
-    this.sendPacket(connection, response);
+    this.sendPacket(terminal, response);
 
     if (request.protocolNumber == 0x33) {
       switch (request.infoContent.status) {
         case 0xA0:
           console.log(`Terminal ${terminal.number} has been locked`);
           terminal.locked = true;
+          terminal.stopUsage();
           break;
 
         case 0xA1:
           console.log(`Terminal ${terminal.number} has been unlocked`);
           terminal.locked = false;
+          terminal.startUsage();
           break;
       }
     }
   }
 
-  sendInformationTransmissionResponse(connection, request, terminal) {
+  sendInformationTransmissionResponse(request, terminal) {
     const response = new ServerInformationTransmission();
     response.assign([]);
     response.serialNumber = request.serialNumber;
 
-    this.sendPacket(connection, response);
+    this.sendPacket(terminal, response);
   }
 
-  processRequest(connection, request) {
-    const terminal = terminals.findByConnection(connection);
-
+  processRequest(connection, request, terminal) {
     if (terminal) {
       const time = new Date();
 
@@ -143,11 +143,11 @@ class ConcoxServer extends ConcoxLogger {
 
     switch (request.protocolNumber) {
       case 0x01: this.sendLoginResponse(connection, request); break;
-      case 0x21: this.handleOnlineCommandResponse(connection, request, terminal); break;
-      case 0x23: this.sendHeartbeatResponse(connection, request, terminal); break;
-      case 0x32: this.sendLocationResponse(connection, request, terminal); break;
-      case 0x33: this.sendLocationResponse(connection, request, terminal); break;
-      case 0x98: this.sendInformationTransmissionResponse(connection, request, terminal); break;
+      case 0x21: this.handleOnlineCommandResponse(request, terminal); break;
+      case 0x23: this.sendHeartbeatResponse(request, terminal); break;
+      case 0x32: this.sendLocationResponse(request, terminal); break;
+      case 0x33: this.sendLocationResponse(request, terminal); break;
+      case 0x98: this.sendInformationTransmissionResponse(request, terminal); break;
     }
   }
 
@@ -158,12 +158,14 @@ class ConcoxServer extends ConcoxLogger {
     
       connection.on('data', (buffer) => {
         const data = [...buffer];
-        const requests = PacketParser.parse(data, Device.TERMINAL);
+        const requests = PacketParser.parse(data, Sender.TERMINAL);
 
         if (requests.length > 0) {
           for (const request of requests) {
-            this.logPacket(request, data);
-            this.processRequest(connection, request);
+            const terminal = terminals.findByConnection(connection);
+
+            this.logPacket(request, data, terminal ? terminal.number : undefined);
+            this.processRequest(connection, request, terminal);
           }
         } else {
           this.logData('Unknown client request', data);

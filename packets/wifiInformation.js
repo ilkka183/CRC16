@@ -1,5 +1,5 @@
 const Packet = require('../lib/packet');
-const { Device } = require('../lib/concox');
+const { Sender } = require('../lib/concox');
 
 
 class WifiInformationPacket extends Packet {
@@ -14,8 +14,8 @@ class WifiInformationPacket extends Packet {
 
 
 class TerminalWifiInformation extends WifiInformationPacket {
-  getDevice() {
-    return Device.TERMINAL;
+  getSender() {
+    return Sender.TERMINAL;
   }
 
   assign() {

@@ -1,5 +1,5 @@
 const Packet = require('../lib/packet');
-const { Device } = require('../lib/concox');
+const { Sender } = require('../lib/concox');
 
 
 class HeartbeatPacket extends Packet {
@@ -14,8 +14,8 @@ class HeartbeatPacket extends Packet {
 
 
 class TerminalHeartbeat extends HeartbeatPacket {
-  getDevice() {
-    return Device.TERMINAL;
+  getSender() {
+    return Sender.TERMINAL;
   }
 
   assign(terminalInformationContent, voltageLevel, gsmSignalLength, languageExtend) {
@@ -51,8 +51,8 @@ class TerminalHeartbeat extends HeartbeatPacket {
 
 
 class ServerHeartbeat extends HeartbeatPacket {
-  getDevice() {
-    return Device.SERVER;
+  getSender() {
+    return Sender.SERVER;
   }
 
   assign() {

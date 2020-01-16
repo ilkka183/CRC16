@@ -11,11 +11,11 @@ class ConcoxLogger {
     console.log(text, Concox.toHex(data));
   }
 
-  logPacket(packet, data) {
+  logPacket(packet, data, terminal) {
     if (this.detailLog)
       packet.log(data);
     else
-      this.logData(packet.getFullTitle() + ' #' + packet.serialNumber + ':', data);
+      this.logData(packet.getFullTitle() + ' #' + terminal + '[' + packet.serialNumber + ']:', data);
   }
 
   logAction(text) {

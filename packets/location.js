@@ -1,5 +1,5 @@
 const Packet = require('../lib/packet');
-const { Concox, Device } = require('../lib/concox');
+const { Concox, Sender } = require('../lib/concox');
 
 
 class LocationPacket extends Packet {
@@ -24,8 +24,8 @@ class TerminalLocation extends LocationPacket {
     super(protocolNumber);
   }
 
-  getDevice() {
-    return Device.TERMINAL;
+  getSender() {
+    return Sender.TERMINAL;
   }
 
   assign(date, latitude, longitude, speed, status) {
@@ -156,8 +156,8 @@ class ServerLocation extends LocationPacket {
     super(protocolNumber);
   }
 
-  getDevice() {
-    return Device.SERVER;
+  getSender() {
+    return Sender.SERVER;
   }
 
   assign() {
