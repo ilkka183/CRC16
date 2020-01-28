@@ -1,0 +1,21 @@
+GET http://localhost:3000/api/users
+###
+GET http://localhost:3000/api/user/2
+###
+POST http://localhost:3000/api/user
+content-type: application/json
+
+{
+  "email": "ilkka.salmenius@saunalahti.fi",
+  "password": "ohion330",
+  "phone": "05061698"
+}
+###
+PUT http://localhost:3000/api/user/2
+content-type: application/json
+
+{
+  "phone": "050 61644"
+}
+###
+DELETE http://localhost:3000/api/user/4

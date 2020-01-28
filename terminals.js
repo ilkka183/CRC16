@@ -29,6 +29,15 @@ class Terminal {
     this.onlineCommandResolve = null;
   }
 
+  connect(server, connection, serialNumber) {
+    this.server = server;
+    this.connection = connection;
+    this.address = connection.remoteAddress;
+    this.port = connection.remotePort;
+    this.loginTime = new Date();
+    this.serialNumber = serialNumber;
+  }
+
   disconnect() {
     this.server = null;
     this.connection = null;
@@ -41,10 +50,16 @@ class Terminal {
   startUsage() {
     this.startTime = new Date();
     this.stopTime = undefined;
+
+    console.log(`Terminal ${this.number} has been unlocked`);
+    this.locked = false;
   }
 
   stopUsage() {
     this.stopTime = new Date();
+
+    console.log(`Terminal ${this.number} has been locked`);
+    this.locked = true;
   }
 
   get duration() {
@@ -58,6 +73,7 @@ class Terminal {
       phoneNumber: this.phoneNumber,
       enabled: this.enabled,
       locked: this.locked,
+      connected: this.connection != null,
       startTime: this.startTime,
       stopTime: this.stopTime,
       duration: this.duration,
@@ -87,7 +103,8 @@ class Terminal {
 
 
 class Terminals {
-  constructor() {
+  constructor(testingCity = undefined) {
+    this.testingCity = testingCity;
     this.items = [];
   }
 
@@ -123,13 +140,36 @@ class Terminals {
     this.items = [];
   }
 
+  get testLocation() {
+    const helsinki = { lat: 60.169035, lng: 24.936149 }
+    const lahti = { lat: 60.982010, lng: 25.658957 }
+
+    switch (this.testingCity) {
+      case 'Helsinki': return helsinki;
+      case 'Lahti': return lahti;
+    }
+  
+    return undefined;
+  }
+
   populate() {
     this.clear();
-    this.add(new Terminal('7551040072', '355951092918858', '+358 44 950 9899', true, true, 60.169035, 24.936149));
-    this.add(new Terminal('1001', '123456789012345', '+358 44 950 9900', true, true, 60.170714, 24.941294));
-    this.add(new Terminal('1002', '012345678901234', '+358 44 950 9901', true, true, 60.171324, 24.935333));
-    this.add(new Terminal('1003', '111111111111111', '+358 44 950 9902', true, true, 60.172144, 24.938945));
-    this.add(new Terminal('1004', '222222222222222', '+358 44 950 9903', true, true, 60.171367, 24.937065));
+
+    switch (this.testingCity) {
+      case 'Lahti':
+        this.add(new Terminal('7551040072', '355951092918858', '+358 44 950 9899', true, true, 60.982010, 25.658957));
+        this.add(new Terminal('1001', '123456789012345', '+358 44 950 9900', true, true, 60.982902, 25.657763, 10));
+        this.add(new Terminal('1002', '012345678901234', '+358 44 950 9901', true, true, 60.981506, 25.661433, 10));
+        break;
+
+      case 'Helsinki':
+        this.add(new Terminal('7551040072', '355951092918858', '+358 44 950 9899', true, true, 60.169035, 24.936149));
+        this.add(new Terminal('1001', '123456789012345', '+358 44 950 9900', true, true, 60.170714, 24.941294, 10));
+        this.add(new Terminal('1002', '012345678901234', '+358 44 950 9901', true, true, 60.171324, 24.935333, 10));
+        this.add(new Terminal('1003', '111111111111111', '+358 44 950 9902', true, true, 60.172144, 24.938945, 10));
+        this.add(new Terminal('1004', '222222222222222', '+358 44 950 9903', true, true, 60.171367, 24.937065, 10));
+        break;
+    }
 
     const numbers = [];
 
@@ -222,14 +262,14 @@ class Terminals {
       });
   }
 
-  initialize(intervalInSeconds, testing = false) {
-    if (testing)
+  initialize(intervalInSeconds) {
+    if (this.testingCity)
       this.populate();
     else
       this.load(intervalInSeconds);
   }
 }
 
-const terminals = new Terminals();
+const terminals = new Terminals('Lahti');
 
 module.exports = { Terminal, Terminals, terminals };

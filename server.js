@@ -47,8 +47,6 @@ class ConcoxServer extends ConcoxLogger {
 
         terminal.onlineCommandResolve = resolve;
 
-        const delay = 5000;
-
         const timeout = setTimeout(() => {
           clearTimeout(timeout);
           reject(`Command "${command}" timed out in ${this.commandTimeoutDelay} ms.`)
@@ -68,18 +66,11 @@ class ConcoxServer extends ConcoxLogger {
     const terminal = terminals.findByImei(imei);
 
     if (terminal) {
-      const time = new Date();
+      terminal.connect(this, connection, request.serialNumber);
 
       const response = new ServerLogin();
-      response.assign(time, []);
-      response.serialNumber = request.serialNumber;
-  
-      terminal.server = this;
-      terminal.connection = connection;
-      terminal.address = connection.remoteAddress;
-      terminal.port = connection.remotePort;
-      terminal.loginTime = time;
-      terminal.serialNumber = request.serialNumber;
+      response.assign(terminal.loginTime, []);
+      response.serialNumber = terminal.serialNumber;
 
       this.sendPacket(terminal, response);
     } else {
@@ -111,14 +102,10 @@ class ConcoxServer extends ConcoxLogger {
     if (request.protocolNumber == 0x33) {
       switch (request.infoContent.status) {
         case 0xA0:
-          console.log(`Terminal ${terminal.number} has been locked`);
-          terminal.locked = true;
           terminal.stopUsage();
           break;
 
         case 0xA1:
-          console.log(`Terminal ${terminal.number} has been unlocked`);
-          terminal.locked = false;
           terminal.startUsage();
           break;
       }

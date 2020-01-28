@@ -1,6 +1,5 @@
 const cors = require('cors')
 const express = require('express')
-const routes = require('./routes')
 const ConcoxServer = require('./server')
 const { terminals } = require('./terminals')
 
@@ -13,7 +12,7 @@ const restPort = DEFAULT_REST_PORT;
 const updateInterval = DEFAULT_UPDATE_INTERVAL;
 
 // Fetch terminal datas from WordPress backend
-terminals.initialize(updateInterval, true);
+terminals.initialize(updateInterval);
 
 // TCP server communicating with the terminals
 const tcp = new ConcoxServer();
@@ -25,5 +24,6 @@ tcp.listen(tcpPort, () => console.log(`Juro TCP server listening on port ${tcpPo
 const rest = express()
 rest.use(cors());
 rest.use(express.json());
-rest.use('/api', routes);
+rest.use('/api', require('./routes/terminal'));
+rest.use('/api', require('./routes/user'));
 rest.listen(restPort, () => console.log(`Juro REST server listening on port ${restPort}...`));

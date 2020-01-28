@@ -4,7 +4,7 @@ const { terminals } = require('./terminals')
 const device = new ConcoxDevice();
 device.detailLog = false;
 device.autoLockDelay = 10000;
-device.number = '1001',
-device.imei = '123456789012345',
+device.number = '1002',
+device.imei = '012345678901234',
 device.location = terminals.testLocation;
 device.start();

@@ -21,6 +21,7 @@ class ConcoxDevice extends ConcoxLogger {
     this.timeZone = 2;
     this.heartbeatInterval = null;
     this.heartbeatDelay = 30000;
+    this.autoLockDelay = undefined;
     this.serialNumber = undefined;
     this.maxSerialNumber = undefined;
 
@@ -34,10 +35,16 @@ class ConcoxDevice extends ConcoxLogger {
     this.routeEnabled = true;
 
     this.host = 'localhost';
+//    this.host = 'superapp1.superapp.fi';
     this.port = 1234;
     this.connection = null;
 
     this.readline = null;
+  }
+
+  set location(value) {
+    this.latitude = value.lat;
+    this.longitude = value.lng;
   }
 
   sendPacket(packet) {
@@ -125,11 +132,16 @@ class ConcoxDevice extends ConcoxLogger {
   }
 
   lock() {
+    console.log('lock');
     this.sendLocationPacket(0x33, 0xA0);
   }
 
   unlock() {
     this.sendLocationPacket(0x33, 0xA1);
+
+    if (this.autoLockDelay) {
+      setTimeout(() => { this.lock(); }, this.autoLockDelay);
+    }
   }
 
   sendInformationTransmissionPacket() {

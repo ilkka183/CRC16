@@ -1,8 +1,8 @@
-GET http://localhost:3000/api/
+GET http://localhost:3000/api/terminals
 ###
-GET http://localhost:3000/api/7551040072
+GET http://localhost:3000/api/terminal/7551040072
 ###
-POST http://localhost:3000/api/
+POST http://localhost:3000/api/terminal
 content-type: application/json
 
 {
@@ -11,7 +11,7 @@ content-type: application/json
   "phoneNumber": "05061698"
 }
 ###
-PUT http://localhost:3000/api/1010
+PUT http://localhost:3000/api/terminal/1010
 content-type: application/json
 
 {
@@ -20,4 +20,4 @@ content-type: application/json
   "speed": 10.2
 }
 ###
-DELETE http://localhost:3000/api/1010
+DELETE http://localhost:3000/api/terminal/1010
