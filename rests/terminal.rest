@@ -1,8 +1,13 @@
-GET http://localhost:3000/api/terminals
+@hostname = localhost
+@port = 3000
+@host = {{hostname}}:{{port}}
+@path = http://{{host}}/api/
+
+GET {{path}}terminals
 ###
-GET http://localhost:3000/api/terminal/7551040072
+GET {{path}}terminal/7551040072
 ###
-POST http://localhost:3000/api/terminal
+POST {{path}}terminal
 content-type: application/json
 
 {
@@ -11,7 +16,7 @@ content-type: application/json
   "phoneNumber": "05061698"
 }
 ###
-PUT http://localhost:3000/api/terminal/1010
+PUT {{path}}terminal/1010
 content-type: application/json
 
 {
@@ -20,4 +25,4 @@ content-type: application/json
   "speed": 10.2
 }
 ###
-DELETE http://localhost:3000/api/terminal/1010
+DELETE {{path}}terminal/1010

@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const REST_HOST = 'http://localhost:51411/wp-json/juro/v1';
+const REST_HOST = 'http://localhost:64508/wp-json/juro/v1';
 
 
 class Terminal {
@@ -103,8 +103,7 @@ class Terminal {
 
 
 class Terminals {
-  constructor(testingCity = undefined) {
-    this.testingCity = testingCity;
+  constructor() {
     this.items = [];
   }
 
@@ -152,22 +151,23 @@ class Terminals {
     return undefined;
   }
 
-  populate() {
+  populate(testingCity) {
+    this.testingCity = testingCity;
     this.clear();
 
-    switch (this.testingCity) {
+    switch (testingCity) {
       case 'Lahti':
-        this.add(new Terminal('7551040072', '355951092918858', '+358 44 950 9899', true, true, 60.982010, 25.658957));
-        this.add(new Terminal('1001', '123456789012345', '+358 44 950 9900', true, true, 60.982902, 25.657763, 10));
-        this.add(new Terminal('1002', '012345678901234', '+358 44 950 9901', true, true, 60.981506, 25.661433, 10));
+        this.add(new Terminal('7551040072', '355951092918858', '044 950 9899', true, true, 60.982010, 25.658957));
+        this.add(new Terminal('1001', '123456789012345', '044 950 9900', true, true, 60.982902, 25.657763, 10));
+        this.add(new Terminal('1002', '012345678901234', '044 950 9901', true, true, 60.981506, 25.661433, 10));
         break;
 
       case 'Helsinki':
-        this.add(new Terminal('7551040072', '355951092918858', '+358 44 950 9899', true, true, 60.169035, 24.936149));
-        this.add(new Terminal('1001', '123456789012345', '+358 44 950 9900', true, true, 60.170714, 24.941294, 10));
-        this.add(new Terminal('1002', '012345678901234', '+358 44 950 9901', true, true, 60.171324, 24.935333, 10));
-        this.add(new Terminal('1003', '111111111111111', '+358 44 950 9902', true, true, 60.172144, 24.938945, 10));
-        this.add(new Terminal('1004', '222222222222222', '+358 44 950 9903', true, true, 60.171367, 24.937065, 10));
+        this.add(new Terminal('7551040072', '355951092918858', '044 950 9899', true, true, 60.169035, 24.936149));
+        this.add(new Terminal('1001', '123456789012345', '044 950 9900', true, true, 60.170714, 24.941294, 10));
+        this.add(new Terminal('1002', '012345678901234', '044 950 9901', true, true, 60.171324, 24.935333, 10));
+        this.add(new Terminal('1003', '111111111111111', '044 950 9902', true, true, 60.172144, 24.938945, 10));
+        this.add(new Terminal('1004', '222222222222222', '044 950 9903', true, true, 60.171367, 24.937065, 10));
         break;
     }
 
@@ -184,7 +184,10 @@ class Terminals {
   }
 
   load(intervalInSeconds) {
-    axios.get(REST_HOST + '/bicycles')
+    const url = REST_HOST + '/bicycles';
+    console.log(url);
+
+    axios.get(url)
       .then(response => {
         const items = response.data;
         const numbers = [];
@@ -261,15 +264,8 @@ class Terminals {
           console.log('Updated terminals:', updatedNumbers);
       });
   }
-
-  initialize(intervalInSeconds) {
-    if (this.testingCity)
-      this.populate();
-    else
-      this.load(intervalInSeconds);
-  }
 }
 
-const terminals = new Terminals('Lahti');
+const terminals = new Terminals();
 
 module.exports = { Terminal, Terminals, terminals };

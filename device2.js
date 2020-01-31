@@ -6,5 +6,5 @@ device.detailLog = false;
 device.autoLockDelay = 10000;
 device.number = '1002',
 device.imei = '012345678901234',
-device.location = terminals.testLocation;
+device.location = { lat: terminals.testLocation.lat - 0.0005, lng: terminals.testLocation.lng - 0.0005 };
 device.start();

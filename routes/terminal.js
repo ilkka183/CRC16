@@ -57,7 +57,7 @@ router.put('/terminal/:number', (req, res) => {
   const number = req.params.number;
   const terminal = terminals.findByNumber(number);
 
-  if (terminal != null) {
+  if (terminal) {
     updateField(terminal, 'phoneNumber', true);
     updateField(terminal, 'latitude');
     updateField(terminal, 'longitude');

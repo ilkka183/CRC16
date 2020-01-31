@@ -9,10 +9,10 @@ const DEFAULT_UPDATE_INTERVAL = 60; // in seconds
 
 const tcpPort = DEFAULT_TCP_PORT;
 const restPort = DEFAULT_REST_PORT;
-const updateInterval = DEFAULT_UPDATE_INTERVAL;
 
 // Fetch terminal datas from WordPress backend
-terminals.initialize(updateInterval);
+terminals.populate('Lahti');
+//terminals.load(DEFAULT_UPDATE_INTERVAL);
 
 // TCP server communicating with the terminals
 const tcp = new ConcoxServer();
@@ -25,5 +25,4 @@ const rest = express()
 rest.use(cors());
 rest.use(express.json());
 rest.use('/api', require('./routes/terminal'));
-rest.use('/api', require('./routes/user'));
 rest.listen(restPort, () => console.log(`Juro REST server listening on port ${restPort}...`));
