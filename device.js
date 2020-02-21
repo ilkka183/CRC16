@@ -132,7 +132,6 @@ class ConcoxDevice extends ConcoxLogger {
   }
 
   lock() {
-    console.log('lock');
     this.sendLocationPacket(0x33, 0xA0);
   }
 

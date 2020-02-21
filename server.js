@@ -1,5 +1,6 @@
 const net = require('net');
 const colors = require('colors');
+const axios = require('axios');
 const ConcoxLogger = require('./logger');
 const PacketParser = require('./lib/packetParser');
 const { terminals } = require('./terminals')
@@ -18,6 +19,9 @@ https://docs.google.com/document/d/1laqBur8dCCLdN_wswdgb3KhQrnBgXfdjtgCCoN1dHhY/
 185.26.50.123
 044 950 9899
 
+- Käy Hampun läpi nede serverin käyttö asiakkaan kanssa
+- Palvelin Seravolle ja ulkoiselle Nodelle
+
 */
 
 class ConcoxServer extends ConcoxLogger {
@@ -26,6 +30,7 @@ class ConcoxServer extends ConcoxLogger {
 
     this.server = null;
     this.commandTimeoutDelay = 10000;
+    this.backendUrl = null;
   }
 
   sendPacket(terminal, packet) {
@@ -91,6 +96,21 @@ class ConcoxServer extends ConcoxLogger {
       terminal.latitude = request.infoContent.gpsInformation.latitude/1800000;
       terminal.longitude = request.infoContent.gpsInformation.longitude/1800000;
       terminal.speed = request.infoContent.gpsInformation.speed;
+
+      const body = {
+        latitude: terminal.latitude,
+        longitude: terminal.longitude
+      }
+
+      const url = this.backendUrl + '/terminal/location/' + terminal.number;
+
+      axios.put(url, body)
+        .then(() => {
+          console.log(`Terminal ${terminal.number} location ${body.latitude}, ${body.longitude} updated to backend`);
+        })
+        .catch(error => {
+          console.log(error);
+        });
     }
 
     let response = new ServerLocation(request.protocolNumber);
@@ -145,17 +165,22 @@ class ConcoxServer extends ConcoxLogger {
     
       connection.on('data', (buffer) => {
         const data = [...buffer];
-        const requests = PacketParser.parse(data, Sender.TERMINAL);
 
-        if (requests.length > 0) {
-          for (const request of requests) {
-            const terminal = terminals.findByConnection(connection);
+        try {
+          const requests = PacketParser.parse(data, Sender.TERMINAL);
 
-            this.logPacket(request, data, terminal ? terminal.number : undefined);
-            this.processRequest(connection, request, terminal);
+          if (requests.length > 0) {
+            for (const request of requests) {
+              const terminal = terminals.findByConnection(connection);
+  
+              this.logPacket(request, data, terminal ? terminal.number : undefined);
+              this.processRequest(connection, request, terminal);
+            }
+          } else {
+            this.logData('Unknown client request', data);
           }
-        } else {
-          this.logData('Unknown client request', data);
+        } catch(error) {
+          this.logError('Error', error);
         }
       });
     

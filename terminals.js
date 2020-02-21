@@ -1,7 +1,5 @@
 const axios = require('axios');
 
-const REST_HOST = 'http://localhost:64508/wp-json/juro/v1';
-
 
 class Terminal {
   constructor(number, imei, phoneNumber, enabled, locked, latitude, longitude) {
@@ -85,20 +83,6 @@ class Terminal {
       serialNumber: this.serialNumber,
     }
   }
-
-  saveLocation() {
-    axios.put(REST_HOST + '/location', {
-      number: this.number,
-      latitude: this.latitude,
-      longitude: this.longitude,
-      speed: this.speed,
-      lastTime: this.lastTime,
-      serialNumber: this.serialNumber
-    })
-    .then(response => {
-      console.log('Location', response.data);
-    });
-  }
 }
 
 
@@ -148,7 +132,7 @@ class Terminals {
       case 'Lahti': return lahti;
     }
   
-    return undefined;
+    return lahti;
   }
 
   populate(testingCity) {
@@ -180,14 +164,11 @@ class Terminals {
   }
 
   addItem(item) {
-    this.add(new Terminal(item.number, item.imei, item.phoneNumber, item.enabled));
+    this.add(new Terminal(item.number, item.imei, item.phoneNumber, item.enabled, false, item.latitude, item.longitude));
   }
 
-  load(intervalInSeconds) {
-    const url = REST_HOST + '/bicycles';
-    console.log(url);
-
-    axios.get(url)
+  load(url, updateIntervalInSeconds) {
+    axios.get(url + '/terminals')
       .then(response => {
         const items = response.data;
         const numbers = [];
@@ -202,15 +183,20 @@ class Terminals {
         console.log('Load terminals', numbers);
 
         setInterval(() => {
-          this.update();
-        }, intervalInSeconds*1000);
+          this.update(url);
+        }, updateIntervalInSeconds*1000);
 
-        console.log(`Terminals updated every ${intervalInSeconds} seconds`);
+        console.log(`Terminals updated every ${updateIntervalInSeconds} seconds`);
+      })
+      .catch(error => {
+        console.log('Error');
       });
   }
 
-  update() {
-    axios.get(REST_HOST + '/bicycles')
+  update(url) {
+    console.log('Updating terminals');
+
+    axios.get(url + '/terminals')
       .then(response => {
         const items = response.data;
 
